@@ -34,7 +34,12 @@
 
 		<template id="server-radio-template">
 			<section class="server-radio">
-				<h3>test</h3>
+				<button id="start-playlist" data-playing="false" role="switch" aria-checked="false">
+					<span>Play/Pause</span>
+				</button> 
+				<br>
+				<input type="range" name="volume" id="volume" min="0" max="2" value="1" step="0.01">
+				<audio id="audio-element" src="../../services/documents/9"></audio>
 			</section>
 		</template>
 	</head>
