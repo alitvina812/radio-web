@@ -25,12 +25,17 @@
             let artists = ["A B", "C D", "RRRR", "WSAQ"];
             handleGenresAndArtists(genres, artists);
             let checkboxes = document.getElementsByClassName("checkbox");
-            for (checkbox of checkboxes) {
+            for (let checkbox of checkboxes) {
                 checkbox.addEventListener("click", function (e) {
                     self.updateLists(e);
                 });
             }
             
+            this.startPlaylist(); 
+            // this.getTracks(["country"], []);     
+            let g = this.getGenres()
+            // this.getTracks(g, [])     
+            this.getTracks()
         }
     });
 
@@ -80,64 +85,75 @@
 
         }
     });
+    
+    // Object.defineProperty(ServerRadioController.prototype, "getLyric", {
+        
+    //     // Get lyric by entering api key, artist, song and creating callback based on those information
+    //     value: function (apikey, callback) {
+    //         // Url get from Song Lyrics Database REST API (Moodle) 
+    //         // --> not quite sure if we need "/:artist/:track"
+    //         const url = 'https://orion.apiseeds.com/api/music/lyric/'; // :artist/:track';
+    //     	try {
+	//         	artists = JSON.parse(await this.xhr("/services/tracks/artists", "GET", {"Accept": "application/json"}, "", "text"));
+	//         	track = JSON.parse(await this.xhr("/services/tracks", "GET", {"Accept": "application/json"}, "", "text"));
+	        	
+	// 			// Throw error message if api key is not valid
+	// 		    if(!apikey) {
+	// 		        callback({success:false, error: 'Your api key is nowhere to be found, please pass a valid one.'},false);
+	// 		        return false;
+	// 		    }
+			    
+	// 		    // Send GET request to Apiseed API and output the lyric
+	// 		    https.get(url + artist + "/" + track + "?apikey=" + apikey, lyric => {
+	// 		        lyric.setEncoding("utf8");
+	// 		        let body = ""; 
+			        
+	// 		        lyric.on("data", data => {
+	// 		            body += data;
+	// 		        });
+			        
+	// 		        // Exchange data with server, convert text into a JavaScript object and create callback
+	// 		        lyric.on("end", () => {
+	// 		            body = JSON.parse(body);
+	// 		            callback(body, lyric.headers);
+	// 		        });
+			        
+	// 		        lyric.on("error", (e) => {
+	// 		            callback(false);
+	// 		        });
+	// 		    });	
+    //     	} catch (error) {
+    //             this.displayError(error);
+    //         }
+    //     }
+    // });
 
     Object.defineProperty(ServerRadioController.prototype, "getGenres", {
         value: async function () {
             try {
-                genres = JSON.parse(await this.xhr("/services/tracks/genres", "GET", {"Accept": "application/json"}, "", "text"));
+                let genres = JSON.parse(await this.xhr("/services/tracks/genres", "GET", {"Accept": "application/json"}, "", "text"));
                 return genres
             } catch (error) {
                 this.displayError(error);
             }
         }
     });
-    
-    Object.defineProperty(ServerRadioController.prototype, "getLyric", {
-    	// Url get from Song Lyrics Database REST API (Moodle) 
-    	// --> not quite sure if we need "/:artist/:track"
-        
-    	// Get lyric by entering api key, artist, song and creating callback based on those information
-        value: function (apikey, callback) {
-            const url = 'https://orion.apiseeds.com/api/music/lyric/'; // :artist/:track';
-        	try {
-	        	artists = JSON.parse(await this.xhr("/services/tracks/artists", "GET", {"Accept": "application/json"}, "", "text"));
-	        	track = JSON.parse(await this.xhr("/services/tracks", "GET", {"Accept": "application/json"}, "", "text"));
-	        	
-				// Throw error message if api key is not valid
-			    if(!apikey) {
-			        callback({success:false, error: 'Your api key is nowhere to be found, please pass a valid one.'},false);
-			        return false;
-			    }
-			    
-			    // Send GET request to Apiseed API and output the lyric
-			    https.get(url + artist + "/" + track + "?apikey=" + apikey, lyric => {
-			        lyric.setEncoding("utf8");
-			        let body = ""; 
-			        
-			        lyric.on("data", data => {
-			            body += data;
-			        });
-			        
-			        // Exchange data with server, convert text into a JavaScript object and create callback
-			        lyric.on("end", () => {
-			            body = JSON.parse(body);
-			            callback(body, lyric.headers);
-			        });
-			        
-			        lyric.on("error", (e) => {
-			            callback(false);
-			        });
-			    });	
-        	} catch (error) {
+
+    Object.defineProperty(ServerRadioController.prototype, "getArtists", {
+        value: async function () {
+            try {
+                let artists = JSON.parse(await this.xhr("/services/tracks/artists", "GET", {"Accept": "application/json"}, "", "text"));
+                return artists
+            } catch (error) {
                 this.displayError(error);
             }
         }
     });
-    Object.defineProperty(ServerRadioController.prototype, "getArtists", {
+    Object.defineProperty(ServerRadioController.prototype, "getPeople", {
         value: async function () {
             try {
-                artists = JSON.parse(await this.xhr("/services/tracks/artists", "GET", {"Accept": "application/json"}, "", "text"));
-                return artists
+                let people = JSON.parse(await this.xhr("/services/people", "GET", {"Accept": "application/json"}, "", "text"));
+                return people
             } catch (error) {
                 this.displayError(error);
             }
@@ -147,14 +163,18 @@
     Object.defineProperty(ServerRadioController.prototype, "getTracks", {
         value: async function (genres, artists) {
             try {
-                let pathStr = "/services/tracks?"
-                for (const genre of genres) {
-                    pathStr += "genre=" + genre + "&"
+                let pathStr = "/services/tracks"
+                if (genres) {
+                    for (const genre of genres) {
+                        pathStr += "genre=" + genre
+                    }
                 }
-                for (const artist of artists) {
-                    pathStr += "artist=" + artist + "&"
+                if (artists) {
+                    for (const artist of artists) {
+                        pathStr += "artist=" + artist + "&"
+                    }
                 }
-                tracks = JSON.parse(await this.xhr(pathStr, "GET", {"Accept": "application/json"}, "", "text"));
+                let tracks = JSON.parse(await this.xhr(pathStr, "GET", {"Accept": "application/json"}, "", "text"));
                 return tracks
             } catch (error) {
                 this.displayError(error);
