@@ -19,9 +19,15 @@
             const mainElement = document.querySelector("main");
             mainElement.appendChild(document.querySelector("#server-radio-template").content.cloneNode(true).firstElementChild);
             try {
-                const genres = await this.fetchGenres();
+                let responsePromiseG = fetch("/services/tracks/genres", { method: "GET", headers: {"Accept": "application/json"}, credentials: "include"});
+                let responsePromiseA = fetch("/services/tracks/artists", { method: "GET", headers: {"Accept": "application/json"}, credentials: "include"});
+                let responseG = await responsePromiseG;
+                let responseA = await responsePromiseA;
+                if (!responseG.ok) throw new Error(responseG.status + " " + responseG.statusText);
+                if (!responseA.ok) throw new Error(responseA.status + " " + responseA.statusText);
+                const genres = await responseG.json();
+                const artists = await responseA.json();
                 setupList(document.getElementById("genres-list"), genres);
-                const artists = await this.fetchArtists();
                 setupList(document.getElementById("artists-list"), artists);
 
                 let updateButton = document.getElementById("update-playlist");
@@ -116,24 +122,6 @@
         }
     });
 
-    Object.defineProperty(ServerRadioController.prototype, "fetchGenres", {
-        value: async function () {
-            let response = await fetch("/services/tracks/genres", { method: "GET", headers: {"Accept": "application/json"}, credentials: "include"});
-            if (!response.ok) throw new Error(response.status + " " + response.statusText);
-            const genres = await response.json();
-            return genres;
-        }
-    });
-
-    Object.defineProperty(ServerRadioController.prototype, "fetchArtists", {
-        value: async function () {
-            let response = await fetch("/services/tracks/artists", { method: "GET", headers: {"Accept": "application/json"}, credentials: "include"});
-            if (!response.ok) throw new Error(response.status + " " + response.statusText);
-            const artists = await response.json();
-            return artists;
-        }
-    });
-
     Object.defineProperty(ServerRadioController.prototype, "getLyric", {
     	// Get lyric by entering api key, artist, song and creating callback based on those information
         value: function (artist, track, apikey, callback) {
@@ -169,16 +157,6 @@
 			        });
 			    });	
         	} catch (error) {
-                this.displayError(error);
-            }
-        }
-    });
-    Object.defineProperty(ServerRadioController.prototype, "getPeople", {
-        value: async function () {
-            try {
-                let people = JSON.parse(await this.xhr("/services/people", "GET", {"Accept": "application/json"}, "", "text"));
-                return people
-            } catch (error) {
                 this.displayError(error);
             }
         }
