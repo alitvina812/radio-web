@@ -82,7 +82,7 @@
     Object.defineProperty(ServerRadioController.prototype, "getLyric", {
     	// Url get from Song Lyrics Database REST API (Moodle) 
     	// --> not quite sure if we need "/:artist/:track"
-    	const url = 'https://orion.apiseeds.com/api/music/lyric/:artist/:track';
+    	const url = 'https://orion.apiseeds.com/api/music/lyric/'; // :artist/:track';
 
     	// Get lyric by entering api key, artist, song and creating callback based on those information
         value: function (apikey, callback) {
