@@ -42,7 +42,7 @@ input.on('change', function selectAudio(event) {
 	 
 				// create a SDP (Session Description Protocol) offer 
 				// to start a new WebRTC connection to a remote peer
-				pc.(setLocalAndSendMessage);
+				pc.createOffer(setLocalAndSendMessage);
 			});
 		});
 	 
