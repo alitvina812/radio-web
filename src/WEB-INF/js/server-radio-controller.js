@@ -80,16 +80,14 @@
     });
     
     Object.defineProperty(ServerRadioController.prototype, "getLyric", {
-    	// Url get from Song Lyrics Database REST API (Moodle) 
-    	// --> not quite sure if we need "/:artist/:track"
-    	const url = 'https://orion.apiseeds.com/api/music/lyric/'; // :artist/:track';
-
     	// Get lyric by entering api key, artist, song and creating callback based on those information
-        value: function (apikey, callback) {
+        value: function (artist, track, apikey, callback) {
+        	
+        	// Url get from Song Lyrics Database REST API (Moodle) 
+        	// --> not quite sure if we need "/:artist/:track"
+        	const url = 'https://orion.apiseeds.com/api/music/lyric/'; // :artist/:track';
+        	
         	try {
-	        	artists = JSON.parse(await this.xhr("/services/tracks/artists", "GET", {"Accept": "application/json"}, "", "text"));
-	        	track = JSON.parse(await this.xhr("/services/tracks", "GET", {"Accept": "application/json"}, "", "text"));
-	        	
 				// Throw error message if api key is not valid
 			    if(!apikey) {
 			        callback({success:false, error: 'Your api key is nowhere to be found, please pass a valid one.'},false);
