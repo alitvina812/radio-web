@@ -74,7 +74,7 @@ public class ApplicationContainer {
 		final ResourceConfig configuration = new ResourceConfig()
 			.packages(ApplicationContainer.class.getPackage().toString())
 			.register(RestResponseCodeProvider.class)
-			.register(RestCorsHeaderProvider.class)
+//			.register(RestCorsHeaderProvider.class)
 			.register(RestJpaLifecycleProvider.open("radio"));
 
 		// Generate keystore for a given host using this JDK utility (default passwords are "changeit"):
