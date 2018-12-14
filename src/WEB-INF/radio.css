@@ -188,3 +188,8 @@ section.messages li.expanded > div a:first-of-type > span {
 section.messages textarea {
 	width: 98%;
 }
+
+.list {
+	width: 49%;
+	display: inline-block;
+}

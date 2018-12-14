@@ -13,30 +13,57 @@
         enumerable: false,
         configurable: false,
         writable: true,
-        value: function () {
+        value: async function () {
             let self = this;            
             console.log(Controller.sessionOwner)
             const mainElement = document.querySelector("main");
             mainElement.appendChild(document.querySelector("#server-radio-template").content.cloneNode(true).firstElementChild);
-            // this.startPlaylist();
-            // let genres = this.getGenres();
-            // let artists = this.getArtists();
-            let genres = ["blues", "country", "pop"];
-            let artists = ["A B", "C D", "RRRR", "WSAQ"];
-            handleGenresAndArtists(genres, artists);
-            let checkboxes = document.getElementsByClassName("checkbox");
-            for (let checkbox of checkboxes) {
-                checkbox.addEventListener("click", function (e) {
-                    self.updateLists(e);
-                });
+            try {
+                const genres = await this.fetchGenres();
+                setupList(document.getElementById("genres-list"), genres);
+                const artists = await this.fetchArtists();
+                setupList(document.getElementById("artists-list"), artists);
+
+                let updateButton = document.getElementById("update-playlist");
+                updateButton.addEventListener("click", () => this.displayPlaylist());
+            } catch (error) {
+                this.displayError(error);
             }
-            
-            this.startPlaylist(); 
-            // this.getTracks(["country"], []);     
-            let g = this.getGenres()
-            // this.getTracks(g, [])     
-            this.getTracks()
         }
+    });
+
+    Object.defineProperty(ServerRadioController.prototype, "displayPlaylist", {
+        value: function () {
+            try {
+                let genres = this.genres = [];
+                let artists = this.artists = [];
+    
+                // let checkboxes = document.getElementsByClassName("checkbox");
+                let mainEl = document.querySelector("main");
+                let checkboxes = mainEl.querySelectorAll("input.checkbox");
+                console.log(checkboxes);
+                
+                for (let i = 0; i < checkboxes.length; i++) {
+                    // console.log("checkbox: " + checkboxes[i]);
+                    
+                    let listType = checkboxes[i].parentElement.parentElement.id;
+                    if (checkboxes[i].checked) {
+                        if (listType == "genres-list") {
+                            genres.push(checkboxes[i].id);
+                        } else if (listType == "artists-list") {
+                            artists.push(checkboxes[i].id);
+                        }
+                    } 
+                }
+                // this.startPlaylist();   
+                this.fetchTracks(this.genres, this.artists)
+    
+                console.log(this.genres);
+                console.log(this.artists);
+            } catch (error) {
+                this.displayError(error);
+            }
+        } 
     });
 
     Object.defineProperty(ServerRadioController.prototype, "startPlaylist", {
@@ -46,7 +73,6 @@
             
             const audioContext = new AudioContext();
             const track = audioContext.createMediaElementSource(audioElement);
-            // track.connect(audioContext.destination);
 
             startButton.addEventListener("click", () => {
 
@@ -64,7 +90,11 @@
             }, false);
 
             const addressString = "../../services/documents/";
-            const trackIds = [5, 8, 9, 10, 11, 12];
+            // const trackIds = [5, 8, 9, 10, 11, 12];
+            const trackIds = [];
+            this.getTracks(this.genres, this.artists).then(function (value) {
+                // todo get ids
+            })
 
             audioElement.addEventListener("ended", function () {
                 // startButton.dataset.playing = 'false';
@@ -86,24 +116,24 @@
         }
     });
 
-    Object.defineProperty(ServerRadioController.prototype, "getGenres", {
+    Object.defineProperty(ServerRadioController.prototype, "fetchGenres", {
         value: async function () {
-            try {
-                let genres = JSON.parse(await this.xhr("/services/tracks/genres", "GET", {"Accept": "application/json"}, "", "text"));
-                return genres
-            } catch (error) {
-                this.displayError(error);
-            }
+            let response = await fetch("/services/tracks/genres", { method: "GET", headers: {"Accept": "application/json"}, credentials: "include"});
+            if (!response.ok) throw new Error(response.status + " " + response.statusText);
+            const genres = await response.json();
+            return genres;
         }
     });
 
-    Object.defineProperty(ServerRadioController.prototype, "getArtists", {
+    Object.defineProperty(ServerRadioController.prototype, "fetchArtists", {
         value: async function () {
-            try {
-                let artists = JSON.parse(await this.xhr("/services/tracks/artists", "GET", {"Accept": "application/json"}, "", "text"));
-                return artists
-            } catch (error) {
-    
+            let response = await fetch("/services/tracks/artists", { method: "GET", headers: {"Accept": "application/json"}, credentials: "include"});
+            if (!response.ok) throw new Error(response.status + " " + response.statusText);
+            const artists = await response.json();
+            return artists;
+        }
+    });
+
     Object.defineProperty(ServerRadioController.prototype, "getLyric", {
     	// Get lyric by entering api key, artist, song and creating callback based on those information
         value: function (artist, track, apikey, callback) {
@@ -154,60 +184,53 @@
         }
     });
 
-    Object.defineProperty(ServerRadioController.prototype, "getTracks", {
+    Object.defineProperty(ServerRadioController.prototype, "fetchTracks", {
         value: async function (genres, artists) {
-            try {
-                let pathStr = "/services/tracks"
+            let path = "/services/tracks";
+            if (genres.length != 0 || artists.length != 0) {
+                path += "?";
                 if (genres) {
                     for (const genre of genres) {
-                        pathStr += "genre=" + genre
+                        path += "genre=" + genre + "&"
                     }
                 }
                 if (artists) {
                     for (const artist of artists) {
-                        pathStr += "artist=" + artist + "&"
+                        path += "artist=" + artist + "&"
                     }
                 }
-                let tracks = JSON.parse(await this.xhr(pathStr, "GET", {"Accept": "application/json"}, "", "text"));
-                return tracks
-            } catch (error) {
-                this.displayError(error);
+                path = path.substring(0, path.length - 1);
             }
+            let response = await fetch(path, { method: "GET", headers: {"Accept": "application/json"}, credentials: "include"});
+            if (!response.ok) throw new Error(response.status + " " + response.statusText);
+            const tracks = await response.json();
+            return tracks
         }
     });
 
-    Object.defineProperty(ServerRadioController.prototype, "updateLists", {
-        value: function (event) {
-            let target = event.target;
-            // todo return lists
-            let genres = [];
-            let artists = [];
-            if (target.checked) {
-                let listType = target.parentElement.parentElement.id;
-                if (listType == "genres-list") {
-                    genres.push(target.id);
-                } else if (listType == "artists-list") {
-                    artists.push(target.id);
-                }
-            } else {
-                // todo remove from array
-            }
-        } 
+
+
+    Object.defineProperty(ServerRadioController.prototype, "genres", {
+        writable: true,
+        value: []
+    });
+    Object.defineProperty(ServerRadioController.prototype, "artists", {
+        writable: true,
+        value: []
     });
 
-    const handleGenresAndArtists = function (genres, artists) {
-        let genresList = document.getElementById("genres-list");
-        let artistsList = document.getElementById("artists-list");
-        setupList(genresList, genres);
-        setupList(artistsList, artists);
-
-
-    }
-
     const setupList =  function (listEl, list) {
+        console.log(list);
+        
         for (let item of list) {
-            const newItem = '<li><input type="checkbox" class = "checkbox" id="' + item + '"><label for="' + item + '">' + item + '</li>';
-            listEl.innerHTML += newItem;
+            // let mainElement = document.querySelector("main");
+            let liEl = document.querySelector("#server-radio-list-el").content.cloneNode(true).firstElementChild;
+            liEl.querySelector("label").innerHTML = item;
+            liEl.querySelector("input").id = item;
+            listEl.appendChild(liEl);
+            
+            // const newItem = '<li><input type="checkbox" class = "checkbox" id="' + item + '"><label for="' + item + '">' + item + '</li>';
+            // listEl.innerHTML += newItem;
         }
     }
 

@@ -35,8 +35,17 @@
 
 		<template id="server-radio-template">
 			<section class="server-radio">
-				<ul id="genres-list"></ul>
-				<ul id="artists-list"></ul>
+				<div>
+					<div class="list">
+						<h4>Genres:</h4>
+						<ul id="genres-list"></ul>
+					</div>
+					<div class="list">
+						<h4>Artists:</h4>
+						<ul id="artists-list"></ul>
+					</div>
+					<button id="update-playlist">Update playlist</button>
+				</div>
 				<button id="start-playlist" data-playing="false" role="switch" aria-checked="false">
 					<span>Play/Pause</span>
 				</button> 
@@ -51,6 +60,13 @@
 				<input type="file" id="audio-input">
 				<audio controls id="my-audio" autoplay></audio>
 			</section>
+		</template>
+
+		<template id="server-radio-list-el">
+			<li>
+				<input type="checkbox" class="checkbox">
+				<label></label>
+			</li>
 		</template>
 	</head>
 
