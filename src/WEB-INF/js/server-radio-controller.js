@@ -50,8 +50,6 @@
                 console.log(checkboxes);
                 
                 for (let i = 0; i < checkboxes.length; i++) {
-                    // console.log("checkbox: " + checkboxes[i]);
-                    
                     let listType = checkboxes[i].parentElement.parentElement.id;
                     if (checkboxes[i].checked) {
                         if (listType == "genres-list") {
@@ -61,11 +59,8 @@
                         }
                     } 
                 }
-                // this.startPlaylist();   
-                this.fetchTracks(this.genres, this.artists)
-    
-                console.log(this.genres);
-                console.log(this.artists);
+                let trackIds = this.fetchTracks(this.genres, this.artists)
+                
             } catch (error) {
                 this.displayError(error);
             }
@@ -73,7 +68,7 @@
     });
 
     Object.defineProperty(ServerRadioController.prototype, "startPlaylist", {
-        value: function () {
+        value: function (trackIds) {
             let audioElement = document.getElementById("audio-element");
             let startButton = document.getElementById("start-playlist");
             
@@ -97,16 +92,11 @@
 
             const addressString = "../../services/documents/";
             // const trackIds = [5, 8, 9, 10, 11, 12];
-            const trackIds = [];
-            this.getTracks(this.genres, this.artists).then(function (value) {
-                // todo get ids
-            })
+
 
             audioElement.addEventListener("ended", function () {
                 // startButton.dataset.playing = 'false';
-                    let randomTrack = trackIds[Math.floor(Math.random() * trackIds.length)];
-                    console.log(randomTrack);
-                    audioElement.src = addressString + randomTrack;
+
                     audioElement.play();
 
             },  false);
@@ -135,6 +125,34 @@
             //return lyrics;
         }
     });
+
+    const playHelper = function (audioContext, bufferNow, bufferLater) {
+        let playNow = createSource(bufferNow);
+        let source = playNow.source;
+        let gainNode = playNow.gainNode;
+        let duration = bufferNow.duration;
+        let currTime = context.currentTime;
+
+        gainNode.gain.linearRampToValueAtTime(0, currTime);
+        gainNode.gain.linearRampToValueAtTime(1, currTime + audioContext.FADE_TIME);
+
+        source.start();
+
+        gainNode.gain.linearRampToValueAtTime(1, currTime + duration - audioContext.FADE_TIME);
+        gainNode.gain.linearRampToValueAtTime(0, currTime + duration);
+
+        let recurse = arguments.callee;
+        audioContext.timer = setTimeout(function () {
+            recurse(bufferLater, bufferNow);
+        }, (duration - audioContext.FADE_TIME) * 1000);
+    }
+
+    const getNextTrack = function (trackIds) {
+        let randomTrack = trackIds[Math.floor(Math.random() * trackIds.length)];
+        console.log(randomTrack);
+        nextTrack = addressString + randomTrack;
+        return nextTrack;
+    } 
 
     Object.defineProperty(ServerRadioController.prototype, "fetchTracks", {
         value: async function (genres, artists) {
@@ -178,18 +196,13 @@
         console.log(list);
         
         for (let item of list) {
-            // let mainElement = document.querySelector("main");
             let liEl = document.querySelector("#server-radio-list-el").content.cloneNode(true).firstElementChild;
             liEl.querySelector("label").innerHTML = item;
             liEl.querySelector("input").id = item;
             listEl.appendChild(liEl);
             
-            // const newItem = '<li><input type="checkbox" class = "checkbox" id="' + item + '"><label for="' + item + '">' + item + '</li>';
-            // listEl.innerHTML += newItem;
         }
     }
-
-
     window.addEventListener("load", event => {
         const anchor = document.querySelector("header li:nth-of-type(2) > a");
         const controller = new ServerRadioController();
