@@ -122,43 +122,17 @@
         }
     });
 
-    Object.defineProperty(ServerRadioController.prototype, "getLyric", {
+    Object.defineProperty(ServerRadioController.prototype, "fetchLyrics", {
     	// Get lyric by entering api key, artist, song and creating callback based on those information
-        value: function (artist, track, apikey, callback) {
-        	
-        	// Url get from Song Lyrics Database REST API (Moodle) 
-        	// --> not quite sure if we need "/:artist/:track"
-        	const url = 'https://orion.apiseeds.com/api/music/lyric/'; // :artist/:track';
-        	
-        	try {
-				// Throw error message if api key is not valid
-			    if(!apikey) {
-			        callback({success:false, error: 'Your api key is nowhere to be found, please pass a valid one.'},false);
-			        return false;
-			    }
-			    
-			    // Send GET request to Apiseed API and output the lyric
-			    https.get(url + artist + "/" + track + "?apikey=" + apikey, lyric => {
-			        lyric.setEncoding("utf8");
-			        let body = ""; 
-			        
-			        lyric.on("data", data => {
-			            body += data;
-			        });
-			        
-			        // Exchange data with server, convert text into a JavaScript object and create callback
-			        lyric.on("end", () => {
-			            body = JSON.parse(body);
-			            callback(body, lyric.headers);
-			        });
-			        
-			        lyric.on("error", (e) => {
-			            callback(false);
-			        });
-			    });	
-        	} catch (error) {
-                this.displayError(error);
-            }
+        value: async function (artist, track) {
+        	const apikey = ''; // Add api key here.
+        	const resource = 'https://orion.apiseeds.com/api/music/lyric/' + artist + "/" + track + "?apikey=" + apikey; // :artist/:track';
+        	  
+        	let response = await fetch(resource, {method: "GET", headers: {"Accept": "application/json"}});
+            if (!response.ok) throw new Error(response.status + " " + response.statusText);
+            return response.json();
+            //const lyrics = await response.json();
+            //return lyrics;
         }
     });
 
@@ -181,10 +155,13 @@
             }
             let response = await fetch(path, { method: "GET", headers: {"Accept": "application/json"}, credentials: "include"});
             if (!response.ok) throw new Error(response.status + " " + response.statusText);
-            const tracks = await response.json();
-            return tracks
+            return response.json();
+            //const tracks = await response.json();
+            //return tracks
         }
     });
+    
+    //fetchLyrics or fetchTrack sollte mit await aufgerufen werden. (weil sie Promise zurückgeben)
 
 
 
