@@ -115,8 +115,8 @@
     Object.defineProperty(ServerRadioController.prototype, "fetchLyrics", {
     	// Get lyric by entering api key, artist, song and creating callback based on those information
         value: async function (artist, track) {
-        	const apikey = ''; // Add api key here.
-        	const resource = 'https://orion.apiseeds.com/api/music/lyric/' + artist + "/" + track + "?apikey=" + apikey; // :artist/:track';
+        	const apikey = 'wdVPwolb7L7m6v81k5iLjaSmPqoH07r17KgPy3TzFa8aO5BhV0GY61j25QwL4djx';
+        	const resource = 'https://orion.apiseeds.com/api/music/lyric/' + artist + "/" + track + "?apikey=" + apikey;
         	  
         	let response = await fetch(resource, {method: "GET", headers: {"Accept": "application/json"}});
             if (!response.ok) throw new Error(response.status + " " + response.statusText);
