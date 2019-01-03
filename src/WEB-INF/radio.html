@@ -8,6 +8,7 @@
 		<meta name="dcterms.dateCopyrighted" content="2018" />
 
 		<title>Web-Radio</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 		<link rel="stylesheet" type="text/css" href="radio.css" />
 		<link rel="icon" type="image/png" href="radio.png"/>
 
@@ -57,8 +58,73 @@
         
         <template id="peer-radio-template">
 			<section class="peer-radio">
-				<input type="file" id="audio-input">
-				<audio controls id="my-audio" autoplay></audio>
+                <div class="mode-selection active">
+                    <div class="intro">
+                        <h3>We deliver digital audio</h3>
+                    </div>
+                    <div class="button-container" row>
+                        <button id="player-mode">Start broadcasting</button>
+                        <button id="listener-mode">Let's stream!</button>
+                    </div>
+                </div>
+                
+                <div class="player-section">
+                    <div class="left-area">
+                        <div class="now-playing">
+                            <div class="current-track">
+                                <p class="current-artist">Artist</p>
+                                <p class="current-filename">Filename</p>
+                            </div>
+                           
+                            <div class="timeline-control">
+                                
+                            </div>
+                            
+                            <div class="play-control">
+                                <button class="control-button skip-previous fa fa-step-backward"></button>
+                                <button class="control-button pause-current fa fa-pause"></button>
+                                <button class="control-button skip-next fa fa-step-forward"></button>
+                                <button class="control-button shuffle fa fa-random"></button>
+                                <button class="control-button repeat fa fa-repeat"></button>
+                            </div>
+                        </div>
+                        
+                        <div class="library">
+                            <div class="categories">
+                                <h4>Library</h4>
+                                <p class="all-tracks">All</p>
+                                <p class="playlists">Playlists</p>
+                            </div>
+                            
+                            <div class="library-content">
+                                <ul class="row">
+                                    <li class="column"><input type="checkbox"></li>
+                                    <li class="column">Title</li>
+                                    <li class="column">Artist</li>
+                                    <li class="column">Album</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="right-area">
+                        <div class="current-playlist">
+                            <div class="next-song">
+                                <p class="playlist-song-artist">Artist</p>
+                                <p class="playlist-song-filename">Filename</p>
+                            </div>
+                            <div class="playlist-song">
+                                <p class="playlist-song-artist">Artist</p>
+                                <p class="playlist-song-filename">Filename</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="listener-section">
+                
+                </div>
+                
 			</section>
 		</template>
 
@@ -68,8 +134,8 @@
 				<label></label>
 			</li>
 		</template>
+        
 	</head>
-
 
 	<body>
 		<header>
