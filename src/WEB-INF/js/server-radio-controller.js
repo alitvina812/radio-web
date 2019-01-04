@@ -39,7 +39,7 @@
     });
 
     Object.defineProperty(ServerRadioController.prototype, "displayPlaylist", {
-        value: function () {
+        value: async function () {
             try {
                 let genres = this.genres = [];
                 let artists = this.artists = [];
@@ -59,7 +59,8 @@
                         }
                     } 
                 }
-                let trackIds = this.fetchTracks(this.genres, this.artists)
+                let tracks = await this.fetchTracks(this.genres, this.artists);
+                console.log(tracks);
                 
             } catch (error) {
                 this.displayError(error);
@@ -157,25 +158,21 @@
     Object.defineProperty(ServerRadioController.prototype, "fetchTracks", {
         value: async function (genres, artists) {
             let path = "/services/tracks";
-            if (genres.length != 0 || artists.length != 0) {
+            if (genres.length > 0 || artists.length > 0) {
                 path += "?";
-                if (genres) {
-                    for (const genre of genres) {
-                        path += "genre=" + genre + "&"
-                    }
+               
+                for (const genre of genres) {
+                   path += "genre=" + genre + "&"
                 }
-                if (artists) {
-                    for (const artist of artists) {
-                        path += "artist=" + artist + "&"
-                    }
+
+                for (const artist of artists) {
+                    path += "artist=" + artist + "&"
                 }
                 path = path.substring(0, path.length - 1);
             }
             let response = await fetch(path, { method: "GET", headers: {"Accept": "application/json"}, credentials: "include"});
             if (!response.ok) throw new Error(response.status + " " + response.statusText);
             return response.json();
-            //const tracks = await response.json();
-            //return tracks
         }
     });
     
