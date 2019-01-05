@@ -61,6 +61,7 @@
                 }
                 let tracks = await this.fetchTracks(this.genres, this.artists);
                 console.log(tracks);
+                this.startPlaylist(tracks);
                 
             } catch (error) {
                 this.displayError(error);
@@ -69,8 +70,23 @@
     });
 
     Object.defineProperty(ServerRadioController.prototype, "startPlaylist", {
-        value: function (trackIds) {
+        value: async function (tracks) {
+            console.log("startPlaylist ...");
+            console.log("tracks to play:")
+            console.log(tracks);
             let audioElement = document.getElementById("audio-element");
+            
+            // for random
+            var min = 0;
+            var max = tracks.length - 1;
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            //console.log(min, max);
+            // get a random index 
+            var index = Math.floor(Math.random() * (max - min + 1)) + min;
+            audioElement.src = "../../services/documents/" + tracks[index].recordingReference;
+            console.log(audioElement);
+
             let startButton = document.getElementById("start-playlist");
             
             const audioContext = new AudioContext();
@@ -94,10 +110,12 @@
             const addressString = "../../services/documents/";
             // const trackIds = [5, 8, 9, 10, 11, 12];
 
-
             audioElement.addEventListener("ended", function () {
                 // startButton.dataset.playing = 'false';
-
+                    //audioElement.src = "../../services/documents/5";
+                    // get anew random track from array
+                    index = Math.floor(Math.random() * (max - min + 1)) + min;
+                    audioElement.src = "../../services/documents/" + tracks[index].recordingReference;
                     audioElement.play();
 
             },  false);
@@ -148,8 +166,8 @@
         }, (duration - audioContext.FADE_TIME) * 1000);
     }
 
-    const getNextTrack = function (trackIds) {
-        let randomTrack = trackIds[Math.floor(Math.random() * trackIds.length)];
+    const getNextTrack = function (tracks) {
+        let randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
         console.log(randomTrack);
         nextTrack = addressString + randomTrack;
         return nextTrack;
