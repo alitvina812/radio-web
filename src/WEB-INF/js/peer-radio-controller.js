@@ -30,6 +30,7 @@
 				playerMode.addEventListener("click", () => this.displayPlayerSection());
 				let listenerMode = document.getElementById("listener-mode");
 				listenerMode.addEventListener("click", () => this.displayListenerSection());
+				
             } catch (error) {
                 this.displayError(error);
             }
@@ -45,8 +46,6 @@
             	let playerSection = document.querySelector(".player-section");
             	modeSelection.classList.remove("active");
             	playerSection.classList.add("active");
-//            	window.location.href = "/player-section.html";
-//            	return false;
             } catch (error) {
                 this.displayError(error);
             }
@@ -62,6 +61,26 @@
             	let listenerSection = document.querySelector(".listener-section");
             	modeSelection.classList.remove("active");
             	listenerSection.classList.add("active");
+            } catch (error) {
+                this.displayError(error);
+            }
+        }
+	});
+	
+	Object.defineProperty(PeerRadioController.prototype, "openTab", {
+		value: function () {
+            try {
+            	let tab = document.getElementByTagName('a[data-toggle="tab"]');
+				tab.addEventListener("click", (event) => {
+					let target = this.attr("href");
+	            	let targetTab = document.getElementById(target);
+	            	let toggleTabs = document.getElementByClassName("toggle-tab");
+	            	let i;
+	            	for (i=0; i<toggleTabs.length; i++) {
+	            		toggleTabs[i].classList = toggleTabs[i].classList.remove("active");
+	            	}
+	            	targetTab.classList.add("active");
+				}, false);
             } catch (error) {
                 this.displayError(error);
             }

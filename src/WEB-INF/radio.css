@@ -209,7 +209,7 @@ section.messages textarea {
     border-radius: 4px;
 }
 
-h3 {
+.intro h3 {
     font-size: 30px;
     color: #fff;
     text-transform: uppercase;
@@ -282,27 +282,6 @@ button#player-mode, button#listener-mode{
 
 h4 {margin: 0}
 
-.library-content {
-    width: 70%;
-    float: right;
-}
-
-
-.row {
-    margin: 0;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    list-style: none;
-    padding: 0
-}
-
-.column {
-    display: inline-block;
-    width: 25%;
-    font-weight: bold;
-}
-
 .right-area {
     width: 30%;
     float: right; 
@@ -326,4 +305,85 @@ h4 {margin: 0}
 
 .next-song {
     background: #a9a9a9;
+}
+
+.listener-section {
+    width: 100%;
+    overflow: auto;
+    background-color: #a9a9a9;
+}
+
+.listener-section a {
+    text-decoration: none;
+    font-family: sans-serif;
+}
+
+.nav-tab {
+    width: 20%;
+    float: left;
+}
+
+.nav-list {
+    padding-left: 30px;
+    list-style: none;
+    font-size: 15px;
+    font-family: inherit;
+}
+
+.nav-item a {
+    color: #f7f8fb;
+}
+
+.nav-item a:hover, 
+.nav-item a:focus {
+    color: #000;
+}
+
+.nav-item:first-child::after{
+    content: "\f002";
+    font-family: FontAwesome;
+    color: #f7f8fb;
+}
+
+.content-tab {
+    width: 80%;
+    float: right;
+    background-color: #f9f9f9;
+}
+
+.content-tab-main {
+    margin: 0 20px;
+}
+
+.content-tab .toggle-tab {display: none}
+.content-tab .active {display: block}
+
+.station-header{
+    text-transform: uppercase;
+    font-size: 20px;
+}
+
+.station-list {
+    display: block;
+}
+
+.station {
+    width: 25%;
+    float: left
+}
+
+.station a {
+    color: #666;
+}
+
+.station-ava {
+    display: block;
+    width: 90%;
+    margin: auto;
+}
+
+.station-name {
+    display: block;
+    text-align: center;
+    padding: 10px
 }

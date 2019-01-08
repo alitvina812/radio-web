@@ -58,6 +58,7 @@
         
         <template id="peer-radio-template">
 			<section class="peer-radio">
+                <input type='file' multiple="multiple" />
                 <div class="mode-selection active">
                     <div class="intro">
                         <h3>We deliver digital audio</h3>
@@ -72,7 +73,6 @@
                     <div class="left-area">
                         <div class="now-playing">
                             <div class="current-track">
-                                <p class="current-artist">Artist</p>
                                 <p class="current-filename">Filename</p>
                             </div>
                            
@@ -86,23 +86,6 @@
                                 <button class="control-button skip-next fa fa-step-forward"></button>
                                 <button class="control-button shuffle fa fa-random"></button>
                                 <button class="control-button repeat fa fa-repeat"></button>
-                            </div>
-                        </div>
-                        
-                        <div class="library">
-                            <div class="categories">
-                                <h4>Library</h4>
-                                <p class="all-tracks">All</p>
-                                <p class="playlists">Playlists</p>
-                            </div>
-                            
-                            <div class="library-content">
-                                <ul class="row">
-                                    <li class="column"><input type="checkbox"></li>
-                                    <li class="column">Title</li>
-                                    <li class="column">Artist</li>
-                                    <li class="column">Album</li>
-                                </ul>
                             </div>
                         </div>
                     </div>
@@ -122,7 +105,63 @@
                 </div>
                 
                 <div class="listener-section">
-                
+                    <div class="nav-tab">
+                        <ul class="nav-list">
+                            <li class="nav-item"><a href="#search-tab" data-toggle="tab">Search </a></li>
+                            <li class="nav-item active"><a href="#home-tab" data-toggle="tab">Home</a></li>
+                            <li class="nav-item"><a href="#stream-tab" data-toggle="tab">Stream</a></li>
+                            <li class="nav-item"><a href="#collection-tab" data-toggle="tab">Collection</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="content-tab">
+                        <div class="content-tab-main">
+                            <div id="search-tab" class="toggle-tab">
+                                <p>Search demo</p>
+                            </div>
+
+                            <div id="home-tab" class="toggle-tab active">
+                                <h3 class="station-header">Stations</h3>
+                                <div class="station-list">
+                                    <div class="station">
+                                        <a href="">
+                                            <img class="station-ava" src="images/internet_radio_250x251.jpg" alt="">
+                                            <span class="station-name">Station Sample </span>
+                                        </a>
+                                    </div>
+
+                                    <div class="station">
+                                        <a href="">
+                                            <img class="station-ava" src="images/internet_radio_250x251.jpg" alt="">
+                                            <span class="station-name">Station Sample </span>
+                                        </a>
+                                    </div>
+
+                                    <div class="station">
+                                        <a href="">
+                                            <img class="station-ava" src="images/internet_radio_250x251.jpg" alt="">
+                                            <span class="station-name">Station Sample </span>
+                                        </a>
+                                    </div>
+
+                                    <div class="station">
+                                        <a href="">
+                                            <img class="station-ava" src="images/internet_radio_250x251.jpg" alt="">
+                                            <span class="station-name">Station Sample </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="stream-tab" class="toggle-tab">
+
+                            </div>
+
+                            <div id="collection-tab" class="toggle-tab">
+
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
 			</section>
