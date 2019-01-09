@@ -1,5 +1,6 @@
 "use strict";
 
+
 (function() {
     const Controller = de_sb_radio.Controller;
 
@@ -92,6 +93,9 @@
             const audioContext = new AudioContext();
             const track = audioContext.createMediaElementSource(audioElement);
 
+            // get Lyrics
+            this.fetchLyrics(tracks[index].artist, tracks[index].name);
+
             startButton.addEventListener("click", () => {
 
                 if (audioContext.state === 'false') {
@@ -108,7 +112,6 @@
             }, false);
 
             const addressString = "../../services/documents/";
-            // const trackIds = [5, 8, 9, 10, 11, 12];
 
             audioElement.addEventListener("ended", function () {
                 // startButton.dataset.playing = 'false';
@@ -117,6 +120,7 @@
                     index = Math.floor(Math.random() * (max - min + 1)) + min;
                     audioElement.src = "../../services/documents/" + tracks[index].recordingReference;
                     audioElement.play();
+                    this.fetchLyrics(tracks[index].artist, tracks[index].name); //update lyrics
 
             },  false);
 
@@ -131,17 +135,27 @@
         }
     });
 
+    var processLiryc = function (response, headers) {
+        console.log("callback get lyrics:")
+        console.log("Header", headers);
+        console.log("Response", response);
+    }
+
     Object.defineProperty(ServerRadioController.prototype, "fetchLyrics", {
     	// Get lyric by entering api key, artist, song and creating callback based on those information
         value: async function (artist, track) {
-        	const apikey = 'wdVPwolb7L7m6v81k5iLjaSmPqoH07r17KgPy3TzFa8aO5BhV0GY61j25QwL4djx';
-        	const resource = 'https://orion.apiseeds.com/api/music/lyric/' + artist + "/" + track + "?apikey=" + apikey;
-        	  
-        	let response = await fetch(resource, {method: "GET", headers: {"Accept": "application/json"}});
-            if (!response.ok) throw new Error(response.status + " " + response.statusText);
-            return response.json();
-            //const lyrics = await response.json();
-            //return lyrics;
+            const apikey = 'wdVPwolb7L7m6v81k5iLjaSmPqoH07r17KgPy3TzFa8aO5BhV0GY61j25QwL4djx';
+            const resource = 'https://orion.apiseeds.com/api/music/lyric/' + artist + "/" + track + "?apikey=" + apikey;
+                   
+            let response = fetch(resource, {method: "GET", headers: {"Accept": "application/json"}}).then(
+                function(u){ return u.json();}
+              ).then(
+                function(json){
+                  console.log(json.result.track.text);
+                  document.getElementById("current-lyrics").innerHTML = json.result.track.text;
+                  
+                }
+              )          
         }
     });
 
