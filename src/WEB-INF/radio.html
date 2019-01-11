@@ -54,7 +54,12 @@
 				<input type="range" name="volume" id="volume" min="0" max="2" value="1" step="0.01">
                 <audio id="audio-element"></audio>
                 <div class="lyrics-section">
+                    <h3 id="current-track">Track:</h3>
                     <p id="current-lyrics">Lyrics</p>
+                </div>
+                <div class="list">
+                    <h4>Playlist:</h4>
+                    <ul id="playlist"></ul>
                 </div>
 			</section>
 		</template>
@@ -171,6 +176,12 @@
 		</template>
 
 		<template id="server-radio-list-el">
+			<li>
+				<input type="checkbox" class="checkbox">
+				<label></label>
+			</li>
+        </template>
+        <template id="server-radio-playlist-el">
 			<li>
 				<input type="checkbox" class="checkbox">
 				<label></label>

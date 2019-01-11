@@ -4,6 +4,9 @@
 (function() {
     const Controller = de_sb_radio.Controller;
 
+    let playList;
+    let playListIndex = 0;
+
     const ServerRadioController = function() {
         Controller.call(this);
     }
@@ -39,6 +42,20 @@
         }
     });
 
+
+    function shuffel(myArr) {       
+        var l = myArr.length, temp, index;  
+        while (l > 0) {  
+           index = Math.floor(Math.random() * l);  
+           console.log(index, l);
+           l--;  
+           temp = myArr[l];          
+           myArr[l] = myArr[index];          
+           myArr[index] = temp;       
+        } 
+        return myArr;    
+    }  
+
     Object.defineProperty(ServerRadioController.prototype, "displayPlaylist", {
         value: async function () {
             try {
@@ -60,9 +77,11 @@
                         }
                     } 
                 }
-                let tracks = await this.fetchTracks(this.genres, this.artists);
+                var tracks = await this.fetchTracks(this.genres, this.artists);
                 console.log(tracks);
-                this.startPlaylist(tracks);
+                
+
+                this.startPlaylist(shuffel(tracks));
                 
             } catch (error) {
                 this.displayError(error);
@@ -70,34 +89,48 @@
         } 
     });
 
+    Object.defineProperty(ServerRadioController.prototype, "playNextTrack", {
+        value: function(audioElement) {
+            if (playListIndex < playList.length)
+            {
+                audioElement.src = "../../services/documents/" + playList[playListIndex].recordingReference;
+                audioElement.play();
+                //update lyrics
+                this.fetchLyrics(playList[playListIndex].artist, playList[playListIndex].name);
+                playListIndex++;
+            } else {
+                console.log("Playlist finished!");
+            }
+        }
+    } );
+
     Object.defineProperty(ServerRadioController.prototype, "startPlaylist", {
         value: async function (tracks) {
-            console.log("startPlaylist ...");
+            playList = tracks;
             console.log("tracks to play:")
-            console.log(tracks);
+            console.log(playList);
+
             let audioElement = document.getElementById("audio-element");
+
+            setupPlayList(document.getElementById("playlist"), playList);
             
-            // for random
-            var min = 0;
-            var max = tracks.length - 1;
-            min = Math.ceil(min);
-            max = Math.floor(max);
-            //console.log(min, max);
             // get a random index 
-            var index = Math.floor(Math.random() * (max - min + 1)) + min;
-            audioElement.src = "../../services/documents/" + tracks[index].recordingReference;
+            //var index = Math.floor(Math.random() * (playList.length ));
+            // tracks were shuffeld in displayPlaylist 
+            audioElement.src = "../../services/documents/" + playList[playListIndex].recordingReference;
+            // get Lyrics
+            this.fetchLyrics(playList[playListIndex].artist, playList[playListIndex].name);
+            playListIndex++;
             console.log(audioElement);
 
             let startButton = document.getElementById("start-playlist");
             
             const audioContext = new AudioContext();
             const track = audioContext.createMediaElementSource(audioElement);
-
-            // get Lyrics
-            this.fetchLyrics(tracks[index].artist, tracks[index].name);
+            audioElement.play();
+            startButton.dataset.playing = 'true';
 
             startButton.addEventListener("click", () => {
-
                 if (audioContext.state === 'false') {
                     audioContext.resume();
                 }
@@ -111,18 +144,13 @@
                 }
             }, false);
 
+            // directly start playing
+            audioElement.play();
+            startButton.dataset.playing = 'true';
+
             const addressString = "../../services/documents/";
 
-            audioElement.addEventListener("ended", function () {
-                // startButton.dataset.playing = 'false';
-                    //audioElement.src = "../../services/documents/5";
-                    // get anew random track from array
-                    index = Math.floor(Math.random() * (max - min + 1)) + min;
-                    audioElement.src = "../../services/documents/" + tracks[index].recordingReference;
-                    audioElement.play();
-                    this.fetchLyrics(tracks[index].artist, tracks[index].name); //update lyrics
-
-            },  false);
+            audioElement.addEventListener("ended", () => this.playNextTrack(audioElement),  false);
 
             // volume
             const gainNode = audioContext.createGain();
@@ -135,11 +163,6 @@
         }
     });
 
-    var processLiryc = function (response, headers) {
-        console.log("callback get lyrics:")
-        console.log("Header", headers);
-        console.log("Response", response);
-    }
 
     Object.defineProperty(ServerRadioController.prototype, "fetchLyrics", {
     	// Get lyric by entering api key, artist, song and creating callback based on those information
@@ -151,7 +174,8 @@
                 function(u){ return u.json();}
               ).then(
                 function(json){
-                  console.log(json.result.track.text);
+                  console.log(json);
+                  document.getElementById("current-track").innerHTML = json.result.artist.name + ": " + json.result.track.name;
                   document.getElementById("current-lyrics").innerHTML = json.result.track.text;
                   
                 }
@@ -232,6 +256,19 @@
             
         }
     }
+
+    const setupPlayList =  function (listEl, list) {
+        console.log(list);
+        
+        for (let item of list) {
+            let liEl = document.querySelector("#server-radio-playlist-el").content.cloneNode(true).firstElementChild;
+            liEl.querySelector("label").innerHTML = item.name + " (" + item.artist + ")";
+            liEl.querySelector("input").id = item.name + "_" + item.artist;
+            listEl.appendChild(liEl);
+            
+        }
+    }
+
     window.addEventListener("load", event => {
         const anchor = document.querySelector("header li:nth-of-type(2) > a");
         const controller = new ServerRadioController();
