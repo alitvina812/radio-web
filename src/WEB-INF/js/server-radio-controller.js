@@ -80,7 +80,8 @@
                 var tracks = await this.fetchTracks(this.genres, this.artists);
                 console.log(tracks);
                 
-
+                let section = document.getElementById("playlist-section");
+                section.classList.remove("hide");
                 this.startPlaylist(shuffel(tracks));
                 
             } catch (error) {
@@ -123,30 +124,30 @@
             playListIndex++;
             console.log(audioElement);
 
-            let startButton = document.getElementById("start-playlist");
+            // let startButton = document.getElementById("start-playlist");
             
             const audioContext = new AudioContext();
             const track = audioContext.createMediaElementSource(audioElement);
-            audioElement.play();
-            startButton.dataset.playing = 'true';
+            // audioElement.play();
+            // startButton.dataset.playing = 'true';
 
-            startButton.addEventListener("click", () => {
-                if (audioContext.state === 'false') {
-                    audioContext.resume();
-                }
+            // startButton.addEventListener("click", () => {
+            //     if (audioContext.state === 'false') {
+            //         audioContext.resume();
+            //     }
 
-                if (startButton.dataset.playing === 'false') {
-                    audioElement.play();
-                    startButton.dataset.playing = 'true';
-                } else if (startButton.dataset.playing === 'true') {
-                    audioElement.pause();
-                    startButton.dataset.playing = 'false';
-                }
-            }, false);
+            //     if (startButton.dataset.playing === 'false') {
+            //         audioElement.play();
+            //         startButton.dataset.playing = 'true';
+            //     } else if (startButton.dataset.playing === 'true') {
+            //         audioElement.pause();
+            //         startButton.dataset.playing = 'false';
+            //     }
+            // }, false);
 
             // directly start playing
             audioElement.play();
-            startButton.dataset.playing = 'true';
+            // startButton.dataset.playing = 'true';
 
             const addressString = "../../services/documents/";
 
@@ -176,7 +177,10 @@
                 function(json){
                   console.log(json);
                   document.getElementById("current-track").innerHTML = json.result.artist.name + ": " + json.result.track.name;
-                  document.getElementById("current-lyrics").innerHTML = json.result.track.text;
+                  let lyricsArray = json.result.track.text.split("\n");
+                  for (const line of lyricsArray) {
+                      document.getElementById("current-lyrics").innerHTML += line + "<br>";
+                  }
                   
                 }
               )          
@@ -262,8 +266,8 @@
         
         for (let item of list) {
             let liEl = document.querySelector("#server-radio-playlist-el").content.cloneNode(true).firstElementChild;
-            liEl.querySelector("label").innerHTML = item.name + " (" + item.artist + ")";
-            liEl.querySelector("input").id = item.name + "_" + item.artist;
+            liEl.querySelector(".name").innerHTML = item.name;
+            liEl.querySelector(".song").innerHTML = item.artist; 
             listEl.appendChild(liEl);
             
         }
