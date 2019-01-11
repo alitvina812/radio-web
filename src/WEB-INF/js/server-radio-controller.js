@@ -178,6 +178,7 @@
                   console.log(json);
                   document.getElementById("current-track").innerHTML = json.result.artist.name + ": " + json.result.track.name;
                   let lyricsArray = json.result.track.text.split("\n");
+                  document.getElementById("current-lyrics").innerHTML = "";
                   for (const line of lyricsArray) {
                       document.getElementById("current-lyrics").innerHTML += line + "<br>";
                   }
