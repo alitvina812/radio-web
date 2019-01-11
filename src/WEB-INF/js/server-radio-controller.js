@@ -9,6 +9,20 @@
 
     const ServerRadioController = function() {
         Controller.call(this);
+
+        Object.defineProperty(this, "leftAudioSource", {
+            enumerable: false,
+            configurable: false,
+            writable: true,
+            value: null
+        });
+
+        Object.defineProperty(this, "rightAudioSource", {
+            enumerable: false,
+            configurable: false,
+            writable: true,
+            value: null
+        });
     }
     ServerRadioController.prototype = Object.create(Controller.prototype);
     ServerRadioController.prototype.constructor = ServerRadioController;
@@ -111,55 +125,34 @@
             console.log("tracks to play:")
             console.log(playList);
 
-            let audioElement = document.getElementById("audio-element");
-
             setupPlayList(document.getElementById("playlist"), playList);
             
-            // get a random index 
-            //var index = Math.floor(Math.random() * (playList.length ));
-            // tracks were shuffeld in displayPlaylist 
-            audioElement.src = "../../services/documents/" + playList[playListIndex].recordingReference;
             // get Lyrics
             this.fetchLyrics(playList[playListIndex].artist, playList[playListIndex].name);
             playListIndex++;
-            console.log(audioElement);
 
-            // let startButton = document.getElementById("start-playlist");
-            
-            const audioContext = new AudioContext();
-            const track = audioContext.createMediaElementSource(audioElement);
-            // audioElement.play();
-            // startButton.dataset.playing = 'true';
 
-            // startButton.addEventListener("click", () => {
-            //     if (audioContext.state === 'false') {
-            //         audioContext.resume();
-            //     }
+            if (!Controller.audioContext) Controller.audioContext = new AudioContext();
 
-            //     if (startButton.dataset.playing === 'false') {
-            //         audioElement.play();
-            //         startButton.dataset.playing = 'true';
-            //     } else if (startButton.dataset.playing === 'true') {
-            //         audioElement.pause();
-            //         startButton.dataset.playing = 'false';
-            //     }
-            // }, false);
+            const path = "../../services/documents/" + playList[playListIndex].recordingReference;
+            let response = await fetch(path, { method: "GET", headers: {"Accept": "audio/*"}, credentials: "include"});
+            if (!response.ok) throw new Error(response.status + " " + response.statusText);
+            let audioBuffer = await response.arrayBuffer();
+            let decodedBuffer = await Controller.audioContext.decodeAudioData(audioBuffer);
 
-            // directly start playing
-            audioElement.play();
-            // startButton.dataset.playing = 'true';
+            this.leftAudioSource = Controller.audioContext.createBufferSource();
+            this.leftAudioSource.loop = false;
+            this.leftAudioSource.buffer = decodedBuffer;
+            this.leftAudioSource.connect(Controller.audioContext.destination);
+            this.leftAudioSource.start();
 
-            const addressString = "../../services/documents/";
-
-            audioElement.addEventListener("ended", () => this.playNextTrack(audioElement),  false);
-
-            // volume
-            const gainNode = audioContext.createGain();
-            track.connect(gainNode).connect(audioContext.destination);
+            // volume 
+            const gainNode = Controller.audioContext.createGain();
+            this.leftAudioSource.connect(gainNode).connect(Controller.audioContext.destination);
             const volumeControl = document.getElementById("volume");
             volumeControl.addEventListener("input", function () {
                 gainNode.gain.value = this.value;
-            }, false);
+            }, false); 
 
         }
     });
@@ -188,8 +181,9 @@
         }
     });
 
+    // muss methode sein leftAudioSource, rightAudioSource
     const playHelper = function (audioContext, bufferNow, bufferLater) {
-        let playNow = createSource(bufferNow);
+        let playNow = createSource(leftAudioSource);
         let source = playNow.source;
         let gainNode = playNow.gainNode;
         let duration = bufferNow.duration;
@@ -267,8 +261,12 @@
         
         for (let item of list) {
             let liEl = document.querySelector("#server-radio-playlist-el").content.cloneNode(true).firstElementChild;
-            liEl.querySelector(".name").innerHTML = item.name;
-            liEl.querySelector(".song").innerHTML = item.artist; 
+            let img = liEl.querySelector("img");
+            img.src = "../../services/documents/" + item.albumCoverReference; 
+            // img.title = 
+            liEl.querySelector("output.name").value = item.name;
+            liEl.querySelector("output.song").value = item.artist; 
+            
             listEl.appendChild(liEl);
             
         }

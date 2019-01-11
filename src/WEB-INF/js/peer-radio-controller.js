@@ -9,6 +9,19 @@
 	
 	const PeerRadioController = function () {
 		Controller.call(this);
+
+		Object.defineProperty(this, "playlist", {
+			enumerable: false,
+			configurable: false,
+			value: []
+		});
+
+		Object.defineProperty(this, "position", {
+			enumerable: false,
+			configurable: false,
+			writable: true,
+			value: -1
+		});
 	}
 	PeerRadioController.prototype = Object.create(Controller.prototype);
 	PeerRadioController.prototype.constructor = PeerRadioController;
@@ -45,7 +58,11 @@
             	let modeSelection = document.querySelector(".mode-selection");
             	let playerSection = document.querySelector(".player-section");
             	modeSelection.classList.remove("active");
-            	playerSection.classList.add("active");
+				playerSection.classList.add("active");
+				
+				let files = document.getElementById("files").files;
+				let audio = new Audio(files[0]);
+				audio.play();
             } catch (error) {
                 this.displayError(error);
             }
@@ -86,6 +103,16 @@
             }
         }
 	});
+
+	// aufruf: let audioBuffer = await readFile(file);
+	function readFile(file) {
+		return new Promise((resolve, reject) => {
+			var fr = new FileReader();  
+			fr.onload = () => resolve(fr.result);    
+			fr.onerror = () => reject(fr.error);
+			fr.readAsArrayBuffer(file);
+		});
+	  }
 	
 	window.addEventListener("load", event => {
 		const anchor = document.querySelector("header li:nth-of-type(3) > a");
