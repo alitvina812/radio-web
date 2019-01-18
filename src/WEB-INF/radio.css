@@ -305,7 +305,7 @@ h4 {margin: 0}
 
 #current-lyrics {
     max-height: 20vh;
-    overflow: scroll;
+    overflow-y: scroll;
 }
 
 .next-song, .playlist-song {
@@ -405,4 +405,22 @@ h4 {margin: 0}
 .no-bullets {
     list-style-type: none;
     padding-left: 0;
+}
+
+/* server radio */
+
+#playlist-section {
+    margin-top: 25px;
+}
+
+#playlist .playlist__image {
+    width: 25%;
+}
+
+#playlist .playlist__name {
+    display: inline-block;
+    width: 60%;
+    height: 85px;
+    margin-left: 5%;
+    vertical-align: text-bottom;
 }

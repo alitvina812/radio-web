@@ -47,11 +47,6 @@
 					</div>
 					<button id="update-playlist">Update playlist</button>
 				</div>
-				<!-- <button id="start-playlist" data-playing="false" role="switch" aria-checked="false">
-					<span>Play/Pause</span>
-				</button>  -->
-				<br>
-                <audio id="audio-element"></audio>
                 <div class="col-container hide" id="playlist-section">
                     <div class="list">
                         <h4>Playlist:</h4>
@@ -185,7 +180,12 @@
         </template>
         <template id="server-radio-playlist-el">
 			<li>
-                <img></img><output class="name"></output> - <output class="song"></output>
+                <img class="playlist__image">
+                <div class="playlist__name">
+                    <output class="name"></output>
+                    <br> 
+                    <output class="song"></output>
+                </div>
 			</li>
 		</template>
         
