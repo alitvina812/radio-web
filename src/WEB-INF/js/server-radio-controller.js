@@ -129,9 +129,7 @@
             let playList = this.currentPlaylist;
             let self = this;
             let fadeTime = this.crossfadeDuration;
-            // let fadeTime = 30
             console.log("fadeTime: " + fadeTime);
-            console.log(500 - fadeTime);
             
                   
             setupPlayList(playList);
