@@ -44,13 +44,22 @@
 					<div class="list">
 						<h4>Artists:</h4>
 						<ul id="artists-list" class="no-bullets"></ul>
-					</div>
-					<button id="update-playlist">Update playlist</button>
+                    </div>
+                    <div class="button__container">
+                        <button id="update-playlist">Update playlist</button>
+                    </div>
 				</div>
                 <div class="col-container hide" id="playlist-section">
                     <div class="list">
-                        <h4>Playlist:</h4>
+                        <label>Volume</label> <br>
                         <input type="range" name="volume" id="volume" min="0" max="2" value="1" step="0.01">
+                    </div>
+                    <div class="list">
+                        <label for="">Crossfade duration: <span id="crossfade-duration">10</span>s.</label> <br>
+                        <input type="range" name="crossfade" id="crossfade" min="0" max="60" value="10" step="1">
+                    </div>
+                    <div class="list">
+                        <h4>Playlist:</h4>
                         <ul id="playlist" class="no-bullets"></ul>
                     </div>
                     <div class="lyrics-section list">

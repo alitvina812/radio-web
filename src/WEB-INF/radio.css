@@ -195,10 +195,6 @@ section.messages textarea {
     vertical-align: top;
 }
 
-#update-playlist {
-    padding: 0.75rem;
-}
-
 .hide {
     display: none;
 }
@@ -423,4 +419,13 @@ h4 {margin: 0}
     height: 85px;
     margin-left: 5%;
     vertical-align: text-bottom;
+}
+
+.button__container {
+    text-align: center;
+}
+#update-playlist {
+    font-size: 18px;
+    padding: 1rem;
+    margin: 1rem;
 }

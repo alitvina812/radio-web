@@ -20,6 +20,13 @@
             writable: true,
             value: null
         });
+
+        Object.defineProperty(this, "crossfadeDuration", {
+            enumerable: false,
+            configurable: false,
+            writable: true,
+            value: 10
+        });
     }
     ServerRadioController.prototype = Object.create(Controller.prototype);
     ServerRadioController.prototype.constructor = ServerRadioController;
@@ -67,6 +74,13 @@
                 const artists = await responseA.json();
                 setupList(document.getElementById("genres-list"), genres);
                 setupList(document.getElementById("artists-list"), artists);
+                let crossfadeInput = document.getElementById("crossfade");
+                crossfadeInput.addEventListener("input", ()=> {
+                    this.crossfadeDuration = crossfadeInput.value;
+                    let valueSpan = document.getElementById("crossfade-duration");
+                    valueSpan.innerText = crossfadeInput.value;
+                })
+
                 // click button to display current playlist
                 let updateButton = document.getElementById("update-playlist");
                 updateButton.addEventListener("click", () => this.displayPlaylist());
@@ -114,7 +128,11 @@
         value: async function () {
             let playList = this.currentPlaylist;
             let self = this;
-            let fadeTime = 10;
+            let fadeTime = this.crossfadeDuration;
+            // let fadeTime = 30
+            console.log("fadeTime: " + fadeTime);
+            console.log(500 - fadeTime);
+            
                   
             setupPlayList(playList);
             
@@ -147,6 +165,9 @@
             this.leftAudioSource.connect(gainNode).connect(Controller.audioContext.destination);
             const volumeControl = document.getElementById("volume");
             volumeControl.addEventListener("input", function () {
+                console.log("input value: " + this.value);
+                console.log("gain node value: " + gainNode.gain.value);
+                
                 gainNode.gain.value = this.value;
             }, false); 
 
@@ -159,6 +180,8 @@
             gainNode.gain.linearRampToValueAtTime(0, currentTime + duration);
 
             setTimeout(function() {
+                console.log('next song started');
+                
                 self.currentTrack++
                 self.startPlaylist();
             }, (duration - fadeTime) * 1000);
