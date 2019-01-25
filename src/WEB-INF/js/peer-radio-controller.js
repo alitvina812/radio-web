@@ -196,27 +196,27 @@
 } ());
 
 
-(function () {
-    let RtcPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection || window.msRTCPeerConnection;
-    let RtcSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription || window.msRTCSessionDescription;
-
-
-    let PeerRadioController = function () {
-        Controller.call(this);
-        this.peerConnection = new RtcPeerConnection();
-    }
-
-
-    PeerRadioController.prototype.displaySenderMode = async function () {
-        let offerDescription = await this.peerConnection.createOffer();
-        let sdp = offerDescription.sdp;
-        // update session user with lastTransmisstionOffer = sdp
-    };
-
-    PeerRadioController.prototype.displayListenerMode = async function (sender) {
-        let sdp = await fetch(person.lastTransmisstionOffer from selected sender (a person))
-        let offerDescription = await this.peerConnection.createOffer();
-        offerDescription.sdp = sdp;
-        await this.peerConnection.createAnswer(offerDescription),
-    };
-} ());
+//(function () {
+//    let RtcPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection || window.msRTCPeerConnection;
+//    let RtcSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription || window.msRTCSessionDescription;
+//
+//
+//    let PeerRadioController = function () {
+//        Controller.call(this);
+//        this.peerConnection = new RtcPeerConnection();
+//    }
+//
+//
+//    PeerRadioController.prototype.displaySenderMode = async function () {
+//        let offerDescription = await this.peerConnection.createOffer();
+//        let sdp = offerDescription.sdp;
+//        // update session user with lastTransmisstionOffer = sdp
+//    };
+//
+//    PeerRadioController.prototype.displayListenerMode = async function (sender) {
+//        let sdp = await fetch(person.lastTransmisstionOffer from selected sender (a person))
+//        let offerDescription = await this.peerConnection.createOffer();
+//        offerDescription.sdp = sdp;
+//        await this.peerConnection.createAnswer(offerDescription),
+//    };
+//} ());
