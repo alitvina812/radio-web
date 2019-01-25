@@ -104,7 +104,17 @@
 			})
 
 		}
-	}) 
+	});
+
+	// Object.defineProperty(PeerRadioController.prototype, "registerTransmission", {
+	// 	value: function () {
+	// 		let path = "/services/people/" + Controller.sessionOwner;
+	// 		let currentTime = Date.now();
+	// 		let response = await fetch(path, { method: "POST", headers: {"Accept": "text_plain"}, credentials: "include"});
+
+	// 	}
+
+	// });
 	
 	Object.defineProperty(PeerRadioController.prototype, "displayPlayerSection", {
 		value: function () {
@@ -183,4 +193,30 @@
 		const controller = new PeerRadioController();
 		anchor.addEventListener("click", event => controller.display());
 	});
+} ());
+
+
+(function () {
+    let RtcPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection || window.msRTCPeerConnection;
+    let RtcSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription || window.msRTCSessionDescription;
+
+
+    let PeerRadioController = function () {
+        Controller.call(this);
+        this.peerConnection = new RtcPeerConnection();
+    }
+
+
+    PeerRadioController.prototype.displaySenderMode = async function () {
+        let offerDescription = await this.peerConnection.createOffer();
+        let sdp = offerDescription.sdp;
+        // update session user with lastTransmisstionOffer = sdp
+    };
+
+    PeerRadioController.prototype.displayListenerMode = async function (sender) {
+        let sdp = await fetch(person.lastTransmisstionOffer from selected sender (a person))
+        let offerDescription = await this.peerConnection.createOffer();
+        offerDescription.sdp = sdp;
+        await this.peerConnection.createAnswer(offerDescription),
+    };
 } ());
