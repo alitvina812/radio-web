@@ -50,6 +50,25 @@
 		}
 	});
 	
+	// see here: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file
+	function updateFileList() {
+		  var curFiles = files.files;
+		  if(curFiles.length === 0) {
+		    consol.log('No files currently selected for upload');
+		  } else {		    
+		    const listEl = document.getElementById("filelist");
+	        for (let item of curFiles) {
+	        	//console.log(item.name);
+	            let newListElement = document.querySelector("#peer-radio-filelist-el").content.cloneNode(true).firstElementChild;
+	            newListElement.querySelector("output.name").value = item.name;
+	            listEl.appendChild(newListElement);
+	        }
+		        
+
+		   
+		  }
+		}
+	
 	Object.defineProperty(PeerRadioController.prototype, "displayPlayerSection", {
 		value: function () {
 			this.displayError();
@@ -60,14 +79,17 @@
             	modeSelection.classList.remove("active");
 				playerSection.classList.add("active");
 				
-				let files = document.getElementById("files").files;
-				let audio = new Audio(files[0]);
-				audio.play();
+				let files = document.getElementById("files");//.files;
+				files.addEventListener('change', updateFileList);
+				
+				//let audio = new Audio(files[0]);
+				//audio.play();
             } catch (error) {
                 this.displayError(error);
             }
         }
 	});
+	
 	
 	Object.defineProperty(PeerRadioController.prototype, "displayListenerSection", {
 		value: function () {

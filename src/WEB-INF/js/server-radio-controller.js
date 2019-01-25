@@ -74,7 +74,7 @@
                 const artists = await responseA.json();
                 setupList(document.getElementById("genres-list"), genres);
                 setupList(document.getElementById("artists-list"), artists);
-                let crossfadeInput = document.getElementById("crossfade");
+                let crossfadeInput = document.getElementById("crossfade_id");
                 crossfadeInput.addEventListener("input", ()=> {
                     this.crossfadeDuration = crossfadeInput.value;
                     let valueSpan = document.getElementById("crossfade-duration");

@@ -403,6 +403,16 @@ h4 {margin: 0}
     padding-left: 0;
 }
 
+
+
+#filelist .filelist__name {
+    display: inline-block;
+    width: 60%;
+    height: 85px;
+    margin-left: 5%;
+    vertical-align: text-bottom;
+}
+
 /* server radio */
 
 #playlist-section {
