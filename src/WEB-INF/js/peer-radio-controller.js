@@ -22,6 +22,17 @@
 			writable: true,
 			value: -1
 		});
+
+		Object.defineProperty(this, "filesToPlay", {
+			enumerable: false,
+			configurable: false,
+			writable: true,
+			value: -1
+		});
+		Object.defineProperty(this, "currentTrack", {
+			writable: true,
+			value: 0
+		});
 	}
 	PeerRadioController.prototype = Object.create(Controller.prototype);
 	PeerRadioController.prototype.constructor = PeerRadioController;
@@ -34,8 +45,7 @@
 		configurable: false,
 		writable: true,
 		value: async function () {
-			let self = this;            
-            console.log(Controller.sessionOwner)
+			let self = this;
             try {
 				const mainElement = document.querySelector("main");
 				mainElement.appendChild(document.querySelector("#peer-radio-template").content.cloneNode(true).firstElementChild);
@@ -65,6 +75,36 @@
 	        }
 		  }
 	}
+
+	Object.defineProperty(PeerRadioController.prototype, "playSong", {
+		value: async function() {
+			let files = this.filesToPlay;
+			if (this.currentTrack >= files.lenght) {
+				this.currentTrack = 0;
+			}
+
+			if (!Controller.audioContext) Controller.audioContext = new AudioContext();
+			console.log(this.filesToPlay);
+			
+			console.log("currentTrack: " + this.currentTrack);
+			console.log(files[this.currentTrack]);
+
+			
+			let audioBuffer = await readFile(files[this.currentTrack]);
+			let decodedBuffer = await Controller.audioContext.decodeAudioData(audioBuffer);
+			let song = Controller.audioContext.createBufferSource();
+			song.buffer = decodedBuffer;
+			song.connect(Controller.audioContext.destination);
+			console.log(song);
+			
+			song.start();
+			this.currentTrack++;
+			song.addEventListener("ended", () => {
+				this.playSong();
+			})
+
+		}
+	}) 
 	
 	Object.defineProperty(PeerRadioController.prototype, "displayPlayerSection", {
 		value: function () {
@@ -79,6 +119,11 @@
 				let files = document.getElementById("files");//.files;
 				files.addEventListener('change', updateFileList);
 				
+				let streamButton = document.getElementById("stream");
+				streamButton.addEventListener("click", () => {
+					this.filesToPlay = files.files;
+					this.playSong();
+				})
 				//let audio = new Audio(files[0]);
 				//audio.play();
             } catch (error) {
