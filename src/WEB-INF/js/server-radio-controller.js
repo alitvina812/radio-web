@@ -236,7 +236,7 @@
                     path += "artist=" + artist + "&"
                 }
                 // path = path.substring(0, path.length - 1);
-                path =+ "resultLimit=50"
+                path += "resultLimit=50"
             }
             let response = await fetch(path, { method: "GET", headers: {"Accept": "application/json"}, credentials: "include"});
             if (!response.ok) throw new Error(response.status + " " + response.statusText);
