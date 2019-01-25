@@ -83,7 +83,12 @@
 
                 // click button to display current playlist
                 let updateButton = document.getElementById("update-playlist");
-                updateButton.addEventListener("click", () => this.displayPlaylist());
+                updateButton.addEventListener("click", () => {
+                    if (this.leftAudioSource != null) {
+                        this.leftAudioSource.stop();
+                    }
+                    this.displayPlaylist();
+                });
             } catch (error) {
                 this.displayError(error);
             }
