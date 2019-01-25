@@ -79,7 +79,7 @@
 	Object.defineProperty(PeerRadioController.prototype, "playSong", {
 		value: async function() {
 			let files = this.filesToPlay;
-			if (this.currentTrack >= files.lenght) {
+			if (this.currentTrack >= files.length) {
 				this.currentTrack = 0;
 			}
 
