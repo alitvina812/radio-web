@@ -43,7 +43,6 @@
 				playerMode.addEventListener("click", () => this.displayPlayerSection());
 				let listenerMode = document.getElementById("listener-mode");
 				listenerMode.addEventListener("click", () => this.displayListenerSection());
-				
             } catch (error) {
                 this.displayError(error);
             }
@@ -53,6 +52,7 @@
 	// see here: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file
 	function updateFileList() {
 		  var curFiles = files.files;
+		  
 		  if(curFiles.length === 0) {
 		    consol.log('No files currently selected for upload');
 		  } else {		    
@@ -63,11 +63,8 @@
 	            newListElement.querySelector("output.name").value = item.name;
 	            listEl.appendChild(newListElement);
 	        }
-		        
-
-		   
 		  }
-		}
+	}
 	
 	Object.defineProperty(PeerRadioController.prototype, "displayPlayerSection", {
 		value: function () {

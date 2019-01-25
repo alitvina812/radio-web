@@ -403,7 +403,9 @@ h4 {margin: 0}
     padding-left: 0;
 }
 
-
+.filelist {
+    width: 80%;
+}
 
 #filelist .filelist__name {
     display: inline-block;

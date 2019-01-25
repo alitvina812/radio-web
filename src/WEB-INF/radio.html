@@ -72,9 +72,9 @@
         
         <template id="peer-radio-template">
 			<section class="peer-radio">
-                <input id="files" type='file' multiple="multiple" accept="audio/*" files/>
+                <!-- <input id="files" type='file' multiple="multiple" accept="audio/*" files/> -->
 
-                                <div class="mode-selection active">
+                <div class="mode-selection active">
                     <div class="intro">
                         <h3>We deliver digital audio</h3>
                     </div>
@@ -85,30 +85,36 @@
                 </div>
                 
                 <div class="player-section">
+                        <input id="files" type='file' multiple="multiple" accept="audio/*" files/>
                     <div class="left-area">
-                        <div class="now-playing">
-                            <div class="current-track">
-                                <p class="current-filename">Filename</p>
-                            </div>
-
-                            <div class="timeline-control">
-                                
-                            </div>
+                        <div class="filelist">
+                            <h4>Selected files:</h4>
+                                <ul id="filelist" class="no-bullets"></ul>
+                       <!--  <div class="now-playing">
                             
-                            <div class="play-control">
+                            </div> -->
+                            <!-- <div class="current-track">
+                                <p class="current-filename">Filename</p>
+                            </div> -->
+
+                            <!-- <div class="timeline-control">
+                                
+                            </div> -->
+                            
+                            <!-- <div class="play-control">
                                 <button class="control-button skip-previous fa fa-step-backward"></button>
                                 <button class="control-button pause-current fa fa-pause"></button>
                                 <button class="control-button skip-next fa fa-step-forward"></button>
                                 <button class="control-button shuffle fa fa-random"></button>
                                 <button class="control-button repeat fa fa-repeat"></button>
-                            </div>
+                            </div> -->
                         </div>
-
                     </div>
 
                     
                     <div class="right-area">
-                        <div class="current-playlist">
+                        <button id="stream">Stream</button>
+                        <!-- <div class="current-playlist">
                             <div class="next-song">
                                 <p class="playlist-song-artist">Artist</p>
                                 <p class="playlist-song-filename">Filename</p>
@@ -117,13 +123,13 @@
                                 <p class="playlist-song-artist">Artist</p>
                                 <p class="playlist-song-filename">Filename</p>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
                     
-                    <div class="list">
+                    <!-- <div class="list">
                         <h4>Selected files:</h4>
                         <ul id="filelist" class="no-bullets"></ul>
-                    </div>
+                    </div> -->
                 </div>
                 
                 <div class="listener-section">
@@ -208,6 +214,7 @@
         
         <template id="peer-radio-filelist-el">
 			<li>
+                <input type="checkbox" class="file-checkbox">
                 <output class="name"></output>
                 <label></label>
 			</li>
