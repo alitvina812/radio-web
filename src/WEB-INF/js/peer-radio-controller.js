@@ -6,32 +6,34 @@
 
 (function () {
 	const Controller = de_sb_radio.Controller;
+	let RtcPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection || window.msRTCPeerConnection;
+
 	
 	const PeerRadioController = function () {
 		Controller.call(this);
 
-		Object.defineProperty(this, "playlist", {
-			enumerable: false,
-			configurable: false,
-			value: []
-		});
-
-		Object.defineProperty(this, "position", {
-			enumerable: false,
-			configurable: false,
-			writable: true,
-			value: -1
-		});
-
+		// todo: store filepath objects as new instance variable of li element objects
 		Object.defineProperty(this, "filesToPlay", {
-			enumerable: false,
 			configurable: false,
 			writable: true,
 			value: -1
 		});
 		Object.defineProperty(this, "currentTrack", {
+			configurable: false,
 			writable: true,
 			value: 0
+		});
+
+		Object.defineProperty(this, "peerConnection", {
+			configurable: false,
+			writable: false,
+			value: new RtcPeerConnection()
+		});
+
+		Object.defineProperty(this, "offer", {
+			configurable: false,
+			writable: true,
+			value: null
 		});
 	}
 	PeerRadioController.prototype = Object.create(Controller.prototype);
@@ -106,15 +108,24 @@
 		}
 	});
 
-	// Object.defineProperty(PeerRadioController.prototype, "registerTransmission", {
-	// 	value: function () {
-	// 		let path = "/services/people/" + Controller.sessionOwner;
-	// 		let currentTime = Date.now();
-	// 		let response = await fetch(path, { method: "POST", headers: {"Accept": "text_plain"}, credentials: "include"});
+	// offer = rtc session description with type = "offer"
+	// call before sending next track
+	// und einmal ganz am anfang
+	Object.defineProperty(PeerRadioController.prototype, "registerTransmission", {
+		value: function () {
+			let person = Controller.sessionOwner;
+			let path = "/services/people/" + person;
+			person.lastTransmission = {
+				address: null,
+				timestamp: Date.now(),
+				offer: this.offer.sdp
+			}
+			// wenn nicht klappt, body: JSON.stringify(person)
+			let response = await fetch(path, { method: "POST", headers: {"Accept": "text_plain", "Content-Type": "application/json"}, credentials: "include", body: person});
 
-	// 	}
+		}
 
-	// });
+	});
 	
 	Object.defineProperty(PeerRadioController.prototype, "displayPlayerSection", {
 		value: function () {

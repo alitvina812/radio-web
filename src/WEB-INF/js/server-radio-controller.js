@@ -151,7 +151,7 @@
             // let rightBuffer = await getDecodedBuffer(playList[this.nextTrack].recordingReference);
 
             // get Lyrics
-            this.fetchLyrics(this.currentPlaylist[this.currentTrack].artist, this.currentPlaylist[this.currentTrack].name);
+            this.displayLyrics(this.currentPlaylist[this.currentTrack].artist, this.currentPlaylist[this.currentTrack].name);
             
             this.leftAudioSource = Controller.audioContext.createBufferSource();
             this.leftAudioSource.loop = false;
@@ -191,25 +191,25 @@
         }
     });
 
-    Object.defineProperty(ServerRadioController.prototype, "fetchLyrics", {
+    Object.defineProperty(ServerRadioController.prototype, "displayLyrics", {
     	// Get lyric by entering api key, artist, song and creating callback based on those information
         value: async function (artist, track) {
             const apikey = 'wdVPwolb7L7m6v81k5iLjaSmPqoH07r17KgPy3TzFa8aO5BhV0GY61j25QwL4djx';
             const resource = 'https://orion.apiseeds.com/api/music/lyric/' + artist + "/" + track + "?apikey=" + apikey;
                    
-            let response = fetch(resource, {method: "GET", headers: {"Accept": "application/json"}}).then(
-                function(u){ return u.json();}
-              ).then(
-                function(json){
-                  document.getElementById("current-track").innerHTML = json.result.artist.name + ": " + json.result.track.name;
-                  let lyricsArray = json.result.track.text.split("\n");
-                  document.getElementById("current-lyrics").innerHTML = "";
-                  for (const line of lyricsArray) {
-                      document.getElementById("current-lyrics").innerHTML += line + "<br>";
-                  }
-                  
-                }
-              )          
+            let response = await fetch(resource, {method: "GET", headers: {"Accept": "application/json"}});
+            if (!response.ok) throw new Error(response.status + " " + response.statusText);
+            const lyrics = await response.json();
+
+            document.querySelector("#current-track").innerHTML = lyrics.result.artist.name + ": " + lyrics.result.track.name;
+            let lyricsArray = lyrics.result.track.text.split("\n");
+            let lyricsElement = document.querySelector("#current-lyrics");
+            while (lyricsElement.childElementCount > 0) lyricsElement.removeChild(lyricsElement.lastChild);
+            for (const line of lyricsArray) {
+                let div = document.createElement("div");
+                div.appendChild(document.createTextNode(line));
+                lyricsElement.appendChild(div);
+            }
         }
     });
 
@@ -244,7 +244,7 @@
         }
     });
     
-    //fetchLyrics or fetchTrack sollte mit await aufgerufen werden. (weil sie Promise zurückgeben)
+    //displayLyrics or fetchTrack sollte mit await aufgerufen werden. (weil sie Promise zurückgeben)
 
 
 
