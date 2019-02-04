@@ -378,7 +378,7 @@ h4 {margin: 0}
 }
 
 .station {
-    width: 25%;
+    width: 100%;
     float: left
 }
 
@@ -408,6 +408,18 @@ h4 {margin: 0}
 }
 
 #filelist .filelist__name {
+    display: inline-block;
+    width: 60%;
+    height: 85px;
+    margin-left: 5%;
+    vertical-align: text-bottom;
+}
+
+#stationlist .stationlist__image {
+    width: 25%;
+}
+
+#stationlist .stationlist__name {
     display: inline-block;
     width: 60%;
     height: 85px;

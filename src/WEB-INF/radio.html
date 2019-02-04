@@ -95,7 +95,6 @@
                         <button id="stream">Stream</button>
                     </div>
 
-                    <hr />
                     <div>
                         <h2>5. Send messages to remote</h2>
                         <textarea id="offer" rows="20" cols="80" readonly></textarea>
@@ -104,63 +103,35 @@
                 </div>
                 
                 <div class="listener-section">
-                    <div class="nav-tab">
+                    <!-- div class="nav-tab">
                         <ul class="nav-list">
                             <li class="nav-item"><a href="#search-tab" data-toggle="tab">Search </a></li>
                             <li class="nav-item active"><a href="#home-tab" data-toggle="tab">Home</a></li>
                             <li class="nav-item"><a href="#stream-tab" data-toggle="tab">Stream</a></li>
                             <li class="nav-item"><a href="#collection-tab" data-toggle="tab">Collection</a></li>
                         </ul>
-                    </div>
+                    </div-->
                     
                     <div class="content-tab">
                         <div class="content-tab-main">
-                            <div id="search-tab" class="toggle-tab">
-                                <p>Search demo</p>
-                            </div>
-
                             <div id="home-tab" class="toggle-tab active">
                                 <h3 class="station-header">Stations</h3>
+                                
                                 <div class="station-list">
-                                    <div class="station">
-                                        <a href="">
-                                            <img class="station-ava" src="images/internet_radio_250x251.jpg" alt="">
-                                            <span class="station-name">Station Sample </span>
-                                        </a>
-                                    </div>
 
-                                    <div class="station">
-                                        <a href="">
-                                            <img class="station-ava" src="images/internet_radio_250x251.jpg" alt="">
-                                            <span class="station-name">Station Sample </span>
-                                        </a>
-                                    </div>
+                                    <ul id="stationlist" class="no-bullets"></ul>
+                                </div>
 
-                                    <div class="station">
-                                        <a href="">
-                                            <img class="station-ava" src="images/internet_radio_250x251.jpg" alt="">
-                                            <span class="station-name">Station Sample </span>
-                                        </a>
-                                    </div>
-
-                                    <div class="station">
-                                        <a href="">
-                                            <img class="station-ava" src="images/internet_radio_250x251.jpg" alt="">
-                                            <span class="station-name">Station Sample </span>
-                                        </a>
-                                    </div>
+                                <div>
+                                    <h2>Communication:</h2>
+                                    <textarea id="answer" rows="20" cols="80" readonly></textarea>
+                                    <textarea id="log2" rows="25" cols="80" readonly></textarea>
                                 </div>
                             </div>
-
-                            <div id="stream-tab" class="toggle-tab">
-
-                            </div>
-
-                            <div id="collection-tab" class="toggle-tab">
-
-                            </div>
+                            
                         </div>
                     </div>
+
                 </div>
                 
 			</section>
@@ -172,6 +143,7 @@
 				<label></label>
 			</li>
         </template>
+
         <template id="server-radio-playlist-el">
 			<li>
                 <img class="playlist__image">
@@ -188,7 +160,25 @@
                 <output class="name"></output>
                 <label></label>
 			</li>
-		</template>
+        </template>
+        
+        <template id="peer-radio-stationlist-el">
+			<li>
+                <div class="station">
+                    <button id="button">
+                        <img class="stationlist__image">
+                    </button>
+                    <!--a href="">
+                        <img class="stationlist__image">
+                    </a-->
+                </div>
+                <div class="stationlist__name">
+                    <output class="name"></output>
+                    <br> 
+                    <output class="lasttransmission"></output>
+                </div>
+			</li>
+        </template>
         
 	</head>
 

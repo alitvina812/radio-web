@@ -1,0 +1,40 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta charset="utf-8" />
+		<script src="./offer.js" type="module"></script>
+	</head>
+	<body>
+		<h1>Offer side</h1>
+		<div>
+			<h2>1. Make offer</h2>
+			<div>
+				<p><button id="make">make</button> (then wait a minute...)</p>
+			</div>
+			<textarea id="offer" rows="20" cols="80" readonly></textarea>
+			<p><button id="copy" disabled>copy</button> the SDP offer to answer side </p>
+		</div>
+		<hr />
+		<div>
+			<h2>4. Receive answer</h2>
+			<p>Paste the SDP answer from answer side</p>
+			<textarea id="answer" rows="20" cols="80"></textarea>
+			<div>
+				<button id="accept" disabled>accept</button>
+			</div>
+		</div>
+		<hr />
+		<div>
+			<h2>5. Send messages to remote</h2>
+			<div>
+				<input id="message" type="text" />
+				<button id="send" disabled>send</button>
+			</div>
+			<textarea id="log" rows="25" cols="80" readonly></textarea>
+		</div>
+		<div>
+			<h2>6. Close channels</h2>
+			<button id="close">close</button>			
+		</div>
+	</body>
+</html>

@@ -35,6 +35,12 @@
 			writable: true,
 			value: null
 		});
+
+		Object.defineProperty(this, "answer", {
+			configurable: false,
+			writable: true,
+			value: null
+		});
 		
 		// copy from unidirektionale offer.js
 		Object.defineProperty(this, "address", { enumerable : true,  writable: true, value: null });
@@ -80,16 +86,18 @@
 			// display local description SDP with all candidates, and global IP4 addresses
 			let sdp = this.connection.localDescription.sdp;
 			if (this.address) sdp = sdp.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/g, this.address);
-			document.querySelector("#offer").value = sdp;
+
+			this.offer = sdp;
+			document.querySelector("#offer").value = this.offer;
 			document.querySelector("#log").value += "[offer generated]\n";
 			
 			
+			// TODO: move this to a better place
 			this.registerTransmission();
 			
 		}
 	});	
-	
-	
+		
 	// accept answer
 	Object.defineProperty(PeerRadioController.prototype, "acceptAnswer", {
 		value: async function (sdp) {
@@ -120,6 +128,97 @@
 			document.querySelector("#log").value += "[channel closed]\n";
 		}
 	});
+
+
+	// for listener site
+	// recreate offer from sdp, then create answer
+	Object.defineProperty(PeerRadioController.prototype, "acceptOffer", {
+		value: async function(sdp) {
+			if (sdp.length === 0) return;
+
+			if (this.connection) this.connection.close();
+			this.connection = new RTCPeerConnection();
+			this.connection.addEventListener("icecandidate", event => this.handleIceCandidate_listener(event.candidate));
+			this.connection.addEventListener("datachannel", event => this.handleReceiveChannelOpened_listener(event.channel));
+
+			let offer = new RTCSessionDescription({ type: "offer", sdp: sdp });
+			await this.connection.setRemoteDescription(offer);
+			let answer = await this.connection.createAnswer();
+			await this.connection.setLocalDescription(answer);
+
+			document.querySelector("#log2").value = "[offer accepted]\n";
+			document.querySelector("#answer").value += sdp;
+			document.querySelector("#answer").value += answer.sdp;
+		}
+	});
+
+	// handle ice candidate
+	Object.defineProperty(PeerRadioController.prototype, "handleIceCandidate_listener", {
+		value: async function (iceCandidate) {
+			if (iceCandidate) return;
+	
+			// display local description SDP with all candidates, and global IP4 addresses
+			let sdp = this.connection.localDescription.sdp;
+			if (this.address) sdp = sdp.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/g, this.address);
+			document.querySelector("#offer").value = sdp;
+			document.querySelector("#log").value += "[offer generated]\n";
+			
+			
+			// TODO: move this to a better place
+			//this.registerTransmission();
+			
+		}
+	});	
+
+	// handle receive channel opened
+	Object.defineProperty(PeerRadioController.prototype, "handleReceiveChannelOpened_listener", {
+		value: function (channel) {
+			channel.addEventListener("close", event => this.handleReceiveChannelClosed_listener());
+			channel.addEventListener("message", event => this.handleMessageReceived_listener(event.data));
+			document.querySelector("#log2").value += "[channel opened]\n";
+		}
+	});
+
+
+	// handle receive channel closed
+	Object.defineProperty(PeerRadioController.prototype, "handleReceiveChannelClosed_listener", {
+		value: function () {
+			document.querySelector("#log2").value += "[channel closed]\n";
+		}
+	});
+
+
+	// receive message from remote
+	Object.defineProperty(PeerRadioController.prototype, "handleMessageReceived_listener", {
+		value: function (data) {
+			document.querySelector("#log2").value += data + "\n";
+		}
+	});
+
+
+
+
+	Object.defineProperty(PeerRadioController.prototype, "fetchPeople", {
+        value: async function () {
+            let path = "/services/people";
+            // if (genres.length > 0 || artists.length > 0) {
+            //     path += "?";
+               
+            //     for (const genre of genres) {
+            //        path += "genre=" + genre + "&"
+            //     }
+
+            //     for (const artist of artists) {
+            //         path += "artist=" + artist + "&"
+            //     }
+            //     // path = path.substring(0, path.length - 1);
+            //     path += "resultLimit=50"
+            // }
+            let response = await fetch(path, { method: "GET", headers: {"Accept": "application/json"}, credentials: "include"});
+            if (!response.ok) throw new Error(response.status + " " + response.statusText);
+            return response.json();
+        }
+    });
 	
 	
 	/**
@@ -174,7 +273,6 @@
 			console.log("currentTrack: " + this.currentTrack);
 			console.log(files[this.currentTrack]);
 
-			
 			let audioBuffer = await readFile(files[this.currentTrack]);
 			let decodedBuffer = await Controller.audioContext.decodeAudioData(audioBuffer);
 			let song = Controller.audioContext.createBufferSource();
@@ -200,16 +298,16 @@
 			let person = Controller.sessionOwner;
 			console.log("Person: ", person);
 			let path = "/services/people/";// + person;
-			console.log("Path: ", path);
+			
 			console.log("SDP: ", this.connection.localDescription.sdp);
 			person.lastTransmission = {
 				address: this.address,
 				timestamp: Date.now(),
-				offer: this.connection.localDescription.sdp // this.offer.sdp
+				offer: this.offer,
 			}
 			// wenn nicht klappt, body: JSON.stringify(person)
 			console.log("POST Transmission");
-			let response = await fetch(path, { method: "POST", // "Accept": "text_plain", 
+			let response = await fetch(path, { method: "POST", 
 				headers: {"Content-Type": "application/json"},
 				credentials: "include", body: JSON.stringify(person),
 				});
@@ -250,14 +348,23 @@
 	
 	
 	Object.defineProperty(PeerRadioController.prototype, "displayListenerSection", {
-		value: function () {
+		value: async function () {
 			this.displayError();
 			
             try {
             	let modeSelection = document.querySelector(".mode-selection");
             	let listenerSection = document.querySelector(".listener-section");
             	modeSelection.classList.remove("active");
-            	listenerSection.classList.add("active");
+				listenerSection.classList.add("active");
+				
+				let peoples = await this.fetchPeople();
+				console.log(peoples);
+
+				if(peoples){
+					this.setupStationList(peoples);
+				}
+				
+
             } catch (error) {
                 this.displayError(error);
             }
@@ -293,6 +400,34 @@
 			fr.readAsArrayBuffer(file);
 		});
 	  }
+
+	
+	Object.defineProperty(PeerRadioController.prototype, "setupStationList", {
+		value: function (peopleList) {
+			const listEl = document.getElementById("stationlist");
+			while (listEl.lastChild) {
+				listEl.removeChild(listEl.lastChild);
+			}
+			
+			for (let item of peopleList) {
+				if (item.lastTransmission){
+					let liEl = document.querySelector("#peer-radio-stationlist-el").content.cloneNode(true).firstElementChild;
+
+					let btn = liEl.querySelector("button");
+					btn.addEventListener("click", event => this.acceptOffer(item.lastTransmission.offer)
+					);
+
+					let img = liEl.querySelector("img");
+					img.src = "../../services/documents/" + item.avatarReference;
+					liEl.querySelector("output.name").value = item.forename;
+					var date = new Date(item.lastTransmission.timestamp); // https://makitweb.com/convert-unix-timestamp-to-date-time-with-javascript/
+					liEl.querySelector("output.lasttransmission").value = date.toLocaleDateString() + " " + date.toLocaleTimeString(); 
+					
+					listEl.appendChild(liEl);
+				}
+			}
+		}
+	});
 	
 	window.addEventListener("load", event => {
 		const anchor = document.querySelector("header li:nth-of-type(3) > a");
@@ -301,29 +436,3 @@
 		anchor.addEventListener("click", event => controller.display());
 	});
 } ());
-
-
-//(function () {
-//    let RtcPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection || window.msRTCPeerConnection;
-//    let RtcSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription || window.msRTCSessionDescription;
-//
-//
-//    let PeerRadioController = function () {
-//        Controller.call(this);
-//        this.peerConnection = new RtcPeerConnection();
-//    }
-//
-//
-//    PeerRadioController.prototype.displaySenderMode = async function () {
-//        let offerDescription = await this.peerConnection.createOffer();
-//        let sdp = offerDescription.sdp;
-//        // update session user with lastTransmisstionOffer = sdp
-//    };
-//
-//    PeerRadioController.prototype.displayListenerMode = async function (sender) {
-//        let sdp = await fetch(person.lastTransmisstionOffer from selected sender (a person))
-//        let offerDescription = await this.peerConnection.createOffer();
-//        offerDescription.sdp = sdp;
-//        await this.peerConnection.createAnswer(offerDescription),
-//    };
-//} ());

@@ -1,0 +1,27 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta charset="utf-8" />
+		<script src="./answer.js" type="module"></script>
+	</head>
+	<body>
+		<h1>Answer side</h1>
+		<div>
+			<h2>2. Receive offer</h2>
+			<p>Paste the SDP offer from offer side:</p>
+			<textarea id="offer" rows="20" cols="80"></textarea>
+			<button id="accept">accept</button>
+		</div>
+		<hr />
+		<div>
+			<h2>3. Send answer</h2>
+			<textarea id="answer" rows="20" cols="80" readonly></textarea>
+			<p><button id="copy" disabled>copy</button> the SDP answer to offer side</p>
+		</div>
+		<hr />
+		<div>
+			<h2>5. Receive messages from remote</h2>
+			<textarea id="log" rows="25" cols="80" readonly></textarea>
+		</div>
+	</body>
+</html>
