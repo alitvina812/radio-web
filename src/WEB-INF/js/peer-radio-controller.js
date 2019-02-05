@@ -85,13 +85,13 @@
 	
 			// display local description SDP with all candidates, and global IP4 addresses
 			let sdp = this.connection.localDescription.sdp;
-			if (this.address) sdp = sdp.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/g, this.address);
+			
+			// if (this.address) sdp = sdp.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/g, this.address);
 
 			this.offer = sdp;
-			document.querySelector("#offer").value = this.offer;
+			// document.querySelector("#offer").value = this.offer;
 			document.querySelector("#log").value += "[offer generated]\n";
-			
-			
+						
 			// TODO: move this to a better place
 			this.registerTransmission();
 			
@@ -115,6 +115,7 @@
 		value: function (data) {
 			document.querySelector("#log").value += data + "\n";
 			this.channel.send(data);
+			this.channel.send(this.filesToPlay);
 		}
 	});
 
@@ -147,7 +148,7 @@
 			await this.connection.setLocalDescription(answer);
 
 			document.querySelector("#log2").value = "[offer accepted]\n";
-			document.querySelector("#answer").value += sdp;
+			// document.querySelector("#answer").value += sdp;
 			document.querySelector("#answer").value += answer.sdp;
 		}
 	});
@@ -332,6 +333,14 @@
 				let files = document.getElementById("files");
 				files.addEventListener('change', updateFileList);
 				
+				let acceptButton = document.getElementById("accept-answer");
+				acceptButton.addEventListener("click", event => this.acceptAnswer(document.querySelector("#offer").value)); //get the pasted answer sdp
+
+				// test button to send dummy msg
+				let testButton = document.getElementById("test-connection");
+				testButton.addEventListener("click", event => this.sendMessage("_TEST_")); //get the pasted answer sdp
+				
+
 				let streamButton = document.getElementById("stream");
 				streamButton.addEventListener("click", () => {
 					console.log(this.address);

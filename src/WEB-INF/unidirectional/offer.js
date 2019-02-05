@@ -82,7 +82,7 @@ controller.handleIceCandidate = async function (iceCandidate) {
 
 	// display local description SDP with all candidates, and global IP4 addresses
 	let sdp = this.connection.localDescription.sdp;
-	if (this.address) sdp = sdp.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/g, this.address);
+	//if (this.address) sdp = sdp.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/g, this.address);
 	document.querySelector("#offer").value = sdp;
 	document.querySelector("#copy").disabled = false;
 	document.querySelector("#accept").disabled = false;
