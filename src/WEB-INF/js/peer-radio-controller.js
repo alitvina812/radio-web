@@ -63,6 +63,7 @@
 	});
 	
 	
+// WEB-RTC server/sender ****************************************************  
 	// make offer
 	Object.defineProperty(PeerRadioController.prototype, "makeOffer", {
 		value: async function () {
@@ -92,11 +93,12 @@
 			// document.querySelector("#offer").value = this.offer;
 			document.querySelector("#log").value += "[offer generated]\n";
 						
-			// TODO: move this to a better place
 			this.registerTransmission();
 			
 		}
-	});	
+	});
+
+
 		
 	// accept answer
 	Object.defineProperty(PeerRadioController.prototype, "acceptAnswer", {
@@ -129,12 +131,18 @@
 			document.querySelector("#log").value += "[channel closed]\n";
 		}
 	});
+// END WEB-RTC server/sender ****************************************************
 
-
-	// for listener site
+// WEB-RTC listener *************************************************************
 	// recreate offer from sdp, then create answer
 	Object.defineProperty(PeerRadioController.prototype, "acceptOffer", {
-		value: async function(sdp) {
+		value: async function(station) {
+			console.log(station);
+			if(station){
+
+			}
+			console.log(station);
+			let sdp = station.lastTransmission.offer;
 			if (sdp.length === 0) return;
 
 			if (this.connection) this.connection.close();
@@ -146,6 +154,9 @@
 			await this.connection.setRemoteDescription(offer);
 			let answer = await this.connection.createAnswer();
 			await this.connection.setLocalDescription(answer);
+
+			station.lastTransmission.answer = answer.sdp;
+			this.registerAnswer(station);
 
 			document.querySelector("#log2").value = "[offer accepted]\n";
 			// document.querySelector("#answer").value += sdp;
@@ -196,10 +207,11 @@
 		}
 	});
 
+// END WEB-RTC listener *************************************************************
 
 
-
-	Object.defineProperty(PeerRadioController.prototype, "fetchPeople", {
+	// get the peplple which are sending -> get stations
+	Object.defineProperty(PeerRadioController.prototype, "fetchStations", {
         value: async function () {
             let path = "/services/people";
             // if (genres.length > 0 || artists.length > 0) {
@@ -217,7 +229,7 @@
             // }
             let response = await fetch(path, { method: "GET", headers: {"Accept": "application/json"}, credentials: "include"});
             if (!response.ok) throw new Error(response.status + " " + response.statusText);
-            return response.json();
+			return response.json();
         }
     });
 	
@@ -305,9 +317,10 @@
 				address: this.address,
 				timestamp: Date.now(),
 				offer: this.offer,
+				answer: "",
 			}
 			// wenn nicht klappt, body: JSON.stringify(person)
-			console.log("POST Transmission");
+			console.log("POST Transmission:\n", person);
 			let response = await fetch(path, { method: "POST", 
 				headers: {"Content-Type": "application/json"},
 				credentials: "include", body: JSON.stringify(person),
@@ -316,9 +329,64 @@
 			if (!response.ok) throw new Error(response.status + " " + response.statusText);
 			console.log(response.json());
 			console.log("registerTransmission DONE.");
+
+			checkForAnswer(this);
 		}
 
 	});
+
+	Object.defineProperty(PeerRadioController.prototype, "registerAnswer", {
+		value: async function (station) {
+			console.log("registerAnswer")
+			let person = station;//Controller.sessionOwner;
+			console.log("Station to listen to: ", person);
+			let path = "/services/people/";
+			
+			//console.log("SDP: ", this.connection.localDescription.sdp);
+			person.lastTransmission = {
+				//address: this.address,
+				//timestamp: Date.now(),
+				//offer: this.offer,
+				answer: this.connection.localDescription.sdp,
+			}
+			console.log("updated Station with answer", person);
+			// wenn nicht klappt, body: JSON.stringify(person)
+			console.log("POST Answer");
+			let response = await fetch(path, { method: "POST", 
+				headers: {"Content-Type": "application/json"},
+				credentials: "include", body: JSON.stringify(person),
+				});
+			
+			if (!response.ok) throw new Error(response.status + " " + response.statusText);
+			console.log(response.json());
+			console.log("registerAnswer DONE.");
+		}
+
+	});
+
+	// function to regulary check for an answer in the DB
+	async function checkForAnswer(ctrl) {
+		console.log("check for answer");
+		// get the stations from DB
+		let peopleList = await ctrl.fetchStations();
+		console.log(peopleList);
+
+		if (peopleList){
+			for(let item of peopleList){
+				let person = Controller.sessionOwner;
+				if(item.identity === person.identity){
+					// now we can check if there is an answer
+					if (item.lastTransmission.answer){
+						console.log(item.lastTransmission.answer);
+						ctrl.acceptAnswer(item.lastTransmission.answer)
+						return;
+					}
+				}
+			}
+		}
+		setTimeout( function() {checkForAnswer(ctrl)}, 5000);
+
+	}
 	
 	Object.defineProperty(PeerRadioController.prototype, "displayPlayerSection", {
 		value: function () {
@@ -345,7 +413,7 @@
 				streamButton.addEventListener("click", () => {
 					console.log(this.address);
 					this.makeOffer();
-					//this.registerTransmission();
+					
 					this.filesToPlay = files.files;
 					this.playSong();
 				})
@@ -366,12 +434,16 @@
             	modeSelection.classList.remove("active");
 				listenerSection.classList.add("active");
 				
-				let peoples = await this.fetchPeople();
-				console.log(peoples);
+				setupStationList(this);
+				// this.setupStationList();
+				//setInterval( this.setupStationList(), 10000); // timer to update staion list 10s
 
-				if(peoples){
-					this.setupStationList(peoples);
-				}
+				// let peoples = await this.fetchStations();
+				// console.log(peoples);
+
+				// if(peoples){
+				// 	this.setupStationList(peoples);
+				// }
 				
 
             } catch (error) {
@@ -411,32 +483,48 @@
 	  }
 
 	
-	Object.defineProperty(PeerRadioController.prototype, "setupStationList", {
-		value: function (peopleList) {
-			const listEl = document.getElementById("stationlist");
-			while (listEl.lastChild) {
-				listEl.removeChild(listEl.lastChild);
-			}
-			
-			for (let item of peopleList) {
-				if (item.lastTransmission){
-					let liEl = document.querySelector("#peer-radio-stationlist-el").content.cloneNode(true).firstElementChild;
+	// Object.defineProperty(PeerRadioController.prototype, "setupStationList", {
+	// 	value: 
+	// need to use ctrl parameter otherwise it does not work
+	async function setupStationList(ctrl) {
+			console.log("update station list");
 
-					let btn = liEl.querySelector("button");
-					btn.addEventListener("click", event => this.acceptOffer(item.lastTransmission.offer)
-					);
+			// get the stations from DB
+			let peopleList = await ctrl.fetchStations();
+			console.log(peopleList);
 
-					let img = liEl.querySelector("img");
-					img.src = "../../services/documents/" + item.avatarReference;
-					liEl.querySelector("output.name").value = item.forename;
-					var date = new Date(item.lastTransmission.timestamp); // https://makitweb.com/convert-unix-timestamp-to-date-time-with-javascript/
-					liEl.querySelector("output.lasttransmission").value = date.toLocaleDateString() + " " + date.toLocaleTimeString(); 
-					
-					listEl.appendChild(liEl);
+			if (peopleList) {
+				const listEl = document.getElementById("stationlist");
+				while (listEl.lastChild) {
+					listEl.removeChild(listEl.lastChild);
+				}
+				
+				for (let item of peopleList) {
+					if (item.lastTransmission){
+						let liEl = document.querySelector("#peer-radio-stationlist-el").content.cloneNode(true).firstElementChild;
+
+						let btn = liEl.querySelector("button");
+						console.log("Set Station: ", item);
+						btn.addEventListener("click", event => ctrl.acceptOffer(item)
+						);
+
+						let img = liEl.querySelector("img");
+						img.src = "../../services/documents/" + item.avatarReference;
+						liEl.querySelector("output.name").value = item.forename;
+						var date = new Date(item.lastTransmission.timestamp); // https://makitweb.com/convert-unix-timestamp-to-date-time-with-javascript/
+						liEl.querySelector("output.lasttransmission").value = date.toLocaleDateString() + " " + date.toLocaleTimeString(); 
+						
+						listEl.appendChild(liEl);
+					}
 				}
 			}
+
+			// if(ctrl.connection.connectionState == "connected"){
+			// 	return; // stop updating station list while streaming ...
+			// }
+			setTimeout( function() {setupStationList(ctrl)}, 10000);
 		}
-	});
+	// });
 	
 	window.addEventListener("load", event => {
 		const anchor = document.querySelector("header li:nth-of-type(3) > a");
