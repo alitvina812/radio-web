@@ -8,7 +8,6 @@
 	const Controller = de_sb_radio.Controller;
 	let RtcPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection || window.msRTCPeerConnection;
 
-	
 	const PeerRadioController = function () {
 		Controller.call(this);
 
@@ -61,18 +60,65 @@
 			this.address = await response.text();
 		}
 	});
-	
-	
+
+	let localStream;
+	var destination = null;
+	var song = null;
+
 // WEB-RTC server/sender ****************************************************  
 	// make offer
 	Object.defineProperty(PeerRadioController.prototype, "makeOffer", {
 		value: async function () {
 			if (this.connection) this.connection.close();
+
+			console.log("getting local stream...");
+			// const stream = await navigator.getUserMedia({audio: true, video: false});
+			// console.log('Received local stream');
+			// localStream = stream;
+			// const audioTracks = localStream.getAudioTracks();
+			// if (audioTracks.length > 0) {
+			// 	console.log(`Using audio device: ${audioTracks[0].label}`);
+			// }
+
+			let files = this.filesToPlay;
+			if (this.currentTrack >= files.length) {
+				this.currentTrack = 0;
+			}
+			if (!Controller.audioContext) Controller.audioContext = new AudioContext();
+			destination = Controller.audioContext.createMediaStreamDestination();
+			console.log(this.filesToPlay);
+			
+			console.log("currentTrack: " + this.currentTrack);
+			console.log(files[this.currentTrack]);
+
+			let audioBuffer = await readFile(files[this.currentTrack]);
+			let decodedBuffer = await Controller.audioContext.decodeAudioData(audioBuffer);
+
+			song = Controller.audioContext.createBufferSource();
+			song.buffer = decodedBuffer;
+			song.start();
+			song.connect(destination);
+			console.log(song);
+			
+			localStream = destination;
+
+
 			this.connection = new RTCPeerConnection();
 			this.connection.addEventListener("icecandidate", event => this.handleIceCandidate(event.candidate));
 			this.channel = this.connection.createDataChannel("offer");
+
+			localStream.stream.getTracks().forEach(track => this.connection.addTrack(track, localStream.stream));
+			//this.connection.addTrack(destination.stream);
+			console.log('Added local stream to connection');
+
 	
-			let offer = await this.connection.createOffer();
+			// let offer = await this.connection.createOffer();
+			const offerOptions = {
+				offerToReceiveAudio: 0,
+				offerToReceiveVideo: 0,
+				voiceActivityDetection: false
+			  };
+			let offer = await this.connection.createOffer(offerOptions);
 			await this.connection.setLocalDescription(offer);
 	
 			document.querySelector("#log").value += "[channel opened]\n";	
@@ -83,14 +129,15 @@
 	Object.defineProperty(PeerRadioController.prototype, "handleIceCandidate", {
 		value: async function (iceCandidate) {
 			if (iceCandidate) return;
-	
+			console.log(iceCandidate);
 			// display local description SDP with all candidates, and global IP4 addresses
 			let sdp = this.connection.localDescription.sdp;
 			
-			// if (this.address) sdp = sdp.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/g, this.address);
+			// for local network and testing disabled, because is not working
+			//if (this.address) sdp = sdp.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/g, this.address);
 
 			this.offer = sdp;
-			// document.querySelector("#offer").value = this.offer;
+			document.querySelector("#offer").value = this.offer;
 			document.querySelector("#log").value += "[offer generated]\n";
 						
 			this.registerTransmission();
@@ -129,6 +176,9 @@
 				this.channel = null;
 			}
 			document.querySelector("#log").value += "[channel closed]\n";
+
+			// delete offer from DB
+			this.unregisterTransmission();
 		}
 	});
 // END WEB-RTC server/sender ****************************************************
@@ -171,7 +221,8 @@
 	
 			// display local description SDP with all candidates, and global IP4 addresses
 			let sdp = this.connection.localDescription.sdp;
-			if (this.address) sdp = sdp.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/g, this.address);
+			// for local network and testing disabled, because is not working
+			//if (this.address) sdp = sdp.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/g, this.address);
 			document.querySelector("#offer").value = sdp;
 			document.querySelector("#log").value += "[offer generated]\n";
 			
@@ -188,6 +239,9 @@
 			channel.addEventListener("close", event => this.handleReceiveChannelClosed_listener());
 			channel.addEventListener("message", event => this.handleMessageReceived_listener(event.data));
 			document.querySelector("#log2").value += "[channel opened]\n";
+
+			// once conneted delete delete answer from DB
+			this.unregisterAnswer();
 		}
 	});
 
@@ -196,6 +250,9 @@
 	Object.defineProperty(PeerRadioController.prototype, "handleReceiveChannelClosed_listener", {
 		value: function () {
 			document.querySelector("#log2").value += "[channel closed]\n";
+
+			// channel got closed so delete answer from DB
+			this.unregisterAnswer();
 		}
 	});
 
@@ -332,25 +389,47 @@
 
 			checkForAnswer(this);
 		}
+	});
 
+	Object.defineProperty(PeerRadioController.prototype, "unregisterTransmission", {
+		value: async function () {
+			console.log("unregisterTransmission")
+			let person = Controller.sessionOwner;
+			let path = "/services/people/";// + person;
+			
+			person.lastTransmission = {
+				address: null,
+				timestamp: null,
+				offer: null,
+				answer: null,
+			}
+			// wenn nicht klappt, body: JSON.stringify(person)
+			console.log("POST Transmission offer deleted");
+			let response = await fetch(path, { method: "POST", 
+				headers: {"Content-Type": "application/json"},
+				credentials: "include", body: JSON.stringify(person),
+				});
+			
+			if (!response.ok) throw new Error(response.status + " " + response.statusText);
+			console.log(response.json());
+			console.log("unregisterTransmission DONE.");
+		}
 	});
 
 	Object.defineProperty(PeerRadioController.prototype, "registerAnswer", {
 		value: async function (station) {
 			console.log("registerAnswer")
-			let person = station;//Controller.sessionOwner;
-			console.log("Station to listen to: ", person);
+			let person = Controller.sessionOwner;
+			console.log("Station to listen to: ", station);
 			let path = "/services/people/";
 			
-			//console.log("SDP: ", this.connection.localDescription.sdp);
 			person.lastTransmission = {
-				//address: this.address,
-				//timestamp: Date.now(),
-				//offer: this.offer,
-				answer: this.connection.localDescription.sdp,
+				address: station.identity, //we use this to show to which staion we want to listen
+				timestamp: Date.now(),
+				offer: null,
+				answer: station.lastTransmission.answer,
 			}
 			console.log("updated Station with answer", person);
-			// wenn nicht klappt, body: JSON.stringify(person)
 			console.log("POST Answer");
 			let response = await fetch(path, { method: "POST", 
 				headers: {"Content-Type": "application/json"},
@@ -360,6 +439,32 @@
 			if (!response.ok) throw new Error(response.status + " " + response.statusText);
 			console.log(response.json());
 			console.log("registerAnswer DONE.");
+		}
+
+	});
+
+	Object.defineProperty(PeerRadioController.prototype, "unregisterAnswer", {
+		value: async function (station) {
+			console.log("unregisterAnswer")
+			let person = Controller.sessionOwner;
+			let path = "/services/people/";
+			
+			person.lastTransmission = {
+				address: null,
+				timestamp: null,
+				offer: null,
+				answer: null,
+			}
+			
+			console.log("POST delete answer");
+			let response = await fetch(path, { method: "POST", 
+				headers: {"Content-Type": "application/json"},
+				credentials: "include", body: JSON.stringify(person),
+				});
+			
+			if (!response.ok) throw new Error(response.status + " " + response.statusText);
+			console.log(response.json());
+			console.log("unregisterAnswer DONE.");
 		}
 
 	});
@@ -374,7 +479,9 @@
 		if (peopleList){
 			for(let item of peopleList){
 				let person = Controller.sessionOwner;
-				if(item.identity === person.identity){
+				if(!item.lastTransmission) continue;
+				if(item.lastTransmission.address == person.identity){
+					console.log(item)
 					// now we can check if there is an answer
 					if (item.lastTransmission.answer){
 						console.log(item.lastTransmission.answer);
@@ -389,7 +496,7 @@
 	}
 	
 	Object.defineProperty(PeerRadioController.prototype, "displayPlayerSection", {
-		value: function () {
+		value: async function () {
 			this.displayError();
 			
             try {
@@ -412,10 +519,10 @@
 				let streamButton = document.getElementById("stream");
 				streamButton.addEventListener("click", () => {
 					console.log(this.address);
+					this.filesToPlay = files.files;
 					this.makeOffer();
 					
-					this.filesToPlay = files.files;
-					this.playSong();
+					// this.playSong();
 				})
             } catch (error) {
                 this.displayError(error);
@@ -434,17 +541,7 @@
             	modeSelection.classList.remove("active");
 				listenerSection.classList.add("active");
 				
-				setupStationList(this);
-				// this.setupStationList();
-				//setInterval( this.setupStationList(), 10000); // timer to update staion list 10s
-
-				// let peoples = await this.fetchStations();
-				// console.log(peoples);
-
-				// if(peoples){
-				// 	this.setupStationList(peoples);
-				// }
-				
+				setupStationList(this);				
 
             } catch (error) {
                 this.displayError(error);
@@ -501,20 +598,22 @@
 				
 				for (let item of peopleList) {
 					if (item.lastTransmission){
-						let liEl = document.querySelector("#peer-radio-stationlist-el").content.cloneNode(true).firstElementChild;
+						if(item.lastTransmission.offer){
+								let liEl = document.querySelector("#peer-radio-stationlist-el").content.cloneNode(true).firstElementChild;
 
-						let btn = liEl.querySelector("button");
-						console.log("Set Station: ", item);
-						btn.addEventListener("click", event => ctrl.acceptOffer(item)
-						);
+								let btn = liEl.querySelector("button");
+								console.log("Set Station: ", item);
+								btn.addEventListener("click", event => ctrl.acceptOffer(item)
+								);
 
-						let img = liEl.querySelector("img");
-						img.src = "../../services/documents/" + item.avatarReference;
-						liEl.querySelector("output.name").value = item.forename;
-						var date = new Date(item.lastTransmission.timestamp); // https://makitweb.com/convert-unix-timestamp-to-date-time-with-javascript/
-						liEl.querySelector("output.lasttransmission").value = date.toLocaleDateString() + " " + date.toLocaleTimeString(); 
-						
-						listEl.appendChild(liEl);
+								let img = liEl.querySelector("img");
+								img.src = "../../services/documents/" + item.avatarReference;
+								liEl.querySelector("output.name").value = item.forename;
+								var date = new Date(item.lastTransmission.timestamp); // https://makitweb.com/convert-unix-timestamp-to-date-time-with-javascript/
+								liEl.querySelector("output.lasttransmission").value = date.toLocaleDateString() + " " + date.toLocaleTimeString(); 
+								
+								listEl.appendChild(liEl);
+						}
 					}
 				}
 			}
