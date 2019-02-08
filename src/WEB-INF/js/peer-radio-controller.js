@@ -45,6 +45,8 @@
 		Object.defineProperty(this, "address", { enumerable : true,  writable: true, value: null });
 		Object.defineProperty(this, "connection", { enumerable : true,  writable: true, value: null });
 		Object.defineProperty(this, "channel", { enumerable : true,  writable: true, value: null });
+
+		Object.defineProperty(this, "audio2", { enumerable : true,  writable: true, value: null});
 		
 
 	}
@@ -66,19 +68,13 @@
 	var song = null;
 
 // WEB-RTC server/sender ****************************************************  
+// for some ides see: https://github.com/webrtc/samples/blob/gh-pages/src/content/peerconnection/pc1/js/main.js
 	// make offer
 	Object.defineProperty(PeerRadioController.prototype, "makeOffer", {
-		value: async function () {
+		value: async function makeOffer() {
 			if (this.connection) this.connection.close();
 
 			console.log("getting local stream...");
-			// const stream = await navigator.getUserMedia({audio: true, video: false});
-			// console.log('Received local stream');
-			// localStream = stream;
-			// const audioTracks = localStream.getAudioTracks();
-			// if (audioTracks.length > 0) {
-			// 	console.log(`Using audio device: ${audioTracks[0].label}`);
-			// }
 
 			let files = this.filesToPlay;
 			if (this.currentTrack >= files.length) {
@@ -101,7 +97,7 @@
 			console.log(song);
 			
 			localStream = destination;
-
+			
 
 			this.connection = new RTCPeerConnection();
 			this.connection.addEventListener("icecandidate", event => this.handleIceCandidate(event.candidate));
@@ -127,7 +123,7 @@
 	
 	// handle ice candidate
 	Object.defineProperty(PeerRadioController.prototype, "handleIceCandidate", {
-		value: async function (iceCandidate) {
+		value: async function handleIceCandidate(iceCandidate) {
 			if (iceCandidate) return;
 			console.log(iceCandidate);
 			// display local description SDP with all candidates, and global IP4 addresses
@@ -149,7 +145,7 @@
 		
 	// accept answer
 	Object.defineProperty(PeerRadioController.prototype, "acceptAnswer", {
-		value: async function (sdp) {
+		value: async function acceptAnswer(sdp) {
 			if (sdp.length === 0) return;
 	
 			let answer = new RTCSessionDescription({ type: "answer", sdp: sdp });
@@ -161,7 +157,7 @@
 
 	// send message to remote
 	Object.defineProperty(PeerRadioController.prototype, "sendMessage", {
-		value: function (data) {
+		value: function sendMessage(data) {
 			document.querySelector("#log").value += data + "\n";
 			this.channel.send(data);
 			this.channel.send(this.filesToPlay);
@@ -186,7 +182,7 @@
 // WEB-RTC listener *************************************************************
 	// recreate offer from sdp, then create answer
 	Object.defineProperty(PeerRadioController.prototype, "acceptOffer", {
-		value: async function(station) {
+		value: async function acceptOffer(station) {
 			console.log(station);
 			if(station){
 
@@ -195,28 +191,62 @@
 			let sdp = station.lastTransmission.offer;
 			if (sdp.length === 0) return;
 
+			const answerOptions = {
+				offerToReceiveAudio: 1,
+				offerToReceiveVideo: 0,
+				voiceActivityDetection: false
+			  };
+
 			if (this.connection) this.connection.close();
 			this.connection = new RTCPeerConnection();
 			this.connection.addEventListener("icecandidate", event => this.handleIceCandidate_listener(event.candidate));
 			this.connection.addEventListener("datachannel", event => this.handleReceiveChannelOpened_listener(event.channel));
+			//this.connection.addEventListener('track', this.handleTrack_listener);
+			this.connection.ontrack = this.handleTrack_listener;
 
 			let offer = new RTCSessionDescription({ type: "offer", sdp: sdp });
 			await this.connection.setRemoteDescription(offer);
-			let answer = await this.connection.createAnswer();
+			let answer = await this.connection.createAnswer(answerOptions);
 			await this.connection.setLocalDescription(answer);
 
 			station.lastTransmission.answer = answer.sdp;
 			this.registerAnswer(station);
 
 			document.querySelector("#log2").value = "[offer accepted]\n";
-			// document.querySelector("#answer").value += sdp;
 			document.querySelector("#answer").value += answer.sdp;
 		}
 	});
 
+	Object.defineProperty(PeerRadioController.prototype, "handleTrack_listener", {
+		value: function handleTrack_listener(e){
+			console.log("got remote stream");
+			// console.log(this.audio2, e);
+
+			let audioArea = document.getElementById("audioArea");
+			console.log(audioArea);
+
+			const audio = document.createElement('audio');
+			audio.controls = true;
+			audio.autoplay = true;
+			audioArea.appendChild(audio);
+
+			try {
+				console.log("set srcObject");
+				audio.srcObject = e.streams[0];
+			  } catch (error) {
+				console.log("set src via URL");
+				audio.src = URL.createObjectURL(e.streams[0]);
+			  }
+			// if (this.audio2.srcObject !== e.streams[0]) {
+			// 	this.audio2.srcObject = e.streams[0];
+			// 	console.log('received remote stream');
+			//   }
+		}
+	})
+
 	// handle ice candidate
 	Object.defineProperty(PeerRadioController.prototype, "handleIceCandidate_listener", {
-		value: async function (iceCandidate) {
+		value: async function handleIceCandidate_listener(iceCandidate) {
 			if (iceCandidate) return;
 	
 			// display local description SDP with all candidates, and global IP4 addresses
@@ -235,7 +265,7 @@
 
 	// handle receive channel opened
 	Object.defineProperty(PeerRadioController.prototype, "handleReceiveChannelOpened_listener", {
-		value: function (channel) {
+		value: function handleReceiveChannelOpened_listener(channel) {
 			channel.addEventListener("close", event => this.handleReceiveChannelClosed_listener());
 			channel.addEventListener("message", event => this.handleMessageReceived_listener(event.data));
 			document.querySelector("#log2").value += "[channel opened]\n";
@@ -331,7 +361,7 @@
 	}
 
 	Object.defineProperty(PeerRadioController.prototype, "playSong", {
-		value: async function() {
+		value: async function playSong() {
 			let files = this.filesToPlay;
 			if (this.currentTrack >= files.length) {
 				this.currentTrack = 0;
@@ -363,7 +393,7 @@
 	// call before sending next track
 	// und einmal ganz am anfang
 	Object.defineProperty(PeerRadioController.prototype, "registerTransmission", {
-		value: async function () {
+		value: async function registerTransmission() {
 			console.log("registerTransmission")
 			let person = Controller.sessionOwner;
 			console.log("Person: ", person);
@@ -392,7 +422,7 @@
 	});
 
 	Object.defineProperty(PeerRadioController.prototype, "unregisterTransmission", {
-		value: async function () {
+		value: async function unregisterTransmission() {
 			console.log("unregisterTransmission")
 			let person = Controller.sessionOwner;
 			let path = "/services/people/";// + person;
@@ -417,7 +447,7 @@
 	});
 
 	Object.defineProperty(PeerRadioController.prototype, "registerAnswer", {
-		value: async function (station) {
+		value: async function registerAnswer(station) {
 			console.log("registerAnswer")
 			let person = Controller.sessionOwner;
 			console.log("Station to listen to: ", station);
@@ -444,7 +474,7 @@
 	});
 
 	Object.defineProperty(PeerRadioController.prototype, "unregisterAnswer", {
-		value: async function (station) {
+		value: async function unregisterAnswer(station) {
 			console.log("unregisterAnswer")
 			let person = Controller.sessionOwner;
 			let path = "/services/people/";
@@ -496,7 +526,7 @@
 	}
 	
 	Object.defineProperty(PeerRadioController.prototype, "displayPlayerSection", {
-		value: async function () {
+		value: async function displayPlayerSection() {
 			this.displayError();
 			
             try {
@@ -532,7 +562,7 @@
 	
 	
 	Object.defineProperty(PeerRadioController.prototype, "displayListenerSection", {
-		value: async function () {
+		value: async function displayListenerSection() {
 			this.displayError();
 			
             try {
@@ -541,7 +571,10 @@
             	modeSelection.classList.remove("active");
 				listenerSection.classList.add("active");
 				
-				setupStationList(this);				
+				setupStationList(this);	
+				
+				// this.audio2 =  document.getElementById("audio2");
+				// console.log(this.audio2.srcObject);
 
             } catch (error) {
                 this.displayError(error);

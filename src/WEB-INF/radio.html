@@ -97,10 +97,10 @@
                     <hr>
                     <div>
                         <h2>Log:</h2>
-                        <textarea id="offer" rows="20" cols="80" ></textarea>
+                        <textarea id="offer" rows="10" cols="40" ></textarea>
                         <button id="accept-answer">Accept</button>
                         <button id="test-connection">TEST</button>
-                        <textarea id="log" rows="25" cols="80" readonly></textarea>
+                        <textarea id="log" rows="10" cols="40" readonly></textarea>
                     </div>
                 </div>
                 
@@ -111,14 +111,21 @@
                                 <h3 class="station-header">Stations</h3>
                                 
                                 <div class="station-list">
-
                                     <ul id="stationlist" class="no-bullets"></ul>
+                                </div>
+
+                                <!--
+                                    Testing audio element for WebRTC
+                                -->
+                                <div id="audioArea">
+                                    <div class="label">Remote audio:</div>
+                                    <!--audio id="audio2" autoplay controls src=""></audio-->
                                 </div>
 
                                 <div>
                                     <h2>Log:</h2>
-                                    <textarea id="answer" rows="20" cols="80" ></textarea>
-                                    <textarea id="log2" rows="25" cols="80" readonly></textarea>
+                                    <textarea id="answer" rows="10" cols="40" ></textarea>
+                                    <textarea id="log2" rows="10" cols="40" readonly></textarea>
                                 </div>
                             </div>
                             
