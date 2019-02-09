@@ -93,7 +93,7 @@
                 compRatioInput.addEventListener("input", ()=> {
                     this.compRatioValue = compRatioInput.value;
                     let valueSpan = document.getElementById("Compression-ratio");
-                    valueSpan.innerText = compRatioValue.value;
+                    valueSpan.innerText = compRatioInput.value;
                 })
 
                 // click button to display current playlist
@@ -162,7 +162,7 @@
             // if (this.nextTrack >= playList.length) {
             //     this.nextTrack = 0;
             // } 
-            let leftBuffer = await getDecodedBuffer(playList[this.currentTrack].recordingReference);
+            let leftBuffer = await this.getDecodedBuffer(playList[this.currentTrack].recordingReference);
             // let rightBuffer = await getDecodedBuffer(playList[this.nextTrack].recordingReference);
 
             // get Lyrics
@@ -228,14 +228,27 @@
         }
     });
 
-    const getDecodedBuffer = async function (recordingReference) {
-        const path = "../../services/documents/" + recordingReference;        
-        let response = await fetch(path, { method: "GET", headers: {"Accept": "audio/*"}, credentials: "include"});
-        if (!response.ok) throw new Error(response.status + " " + response.statusText);
-        let audioBuffer = await response.arrayBuffer();
-        let decodedBuffer = await Controller.audioContext.decodeAudioData(audioBuffer);
-        return decodedBuffer;
-    } 
+    Object.defineProperty(ServerRadioController.prototype, "getDecodedBuffer",{
+        value: async function getDecodedBuffer(recordingReference) {
+            
+            const setCompRatio =  "?audioCompressionRatio=" + this.compRatioValue;
+            const path = "../../services/documents/" + recordingReference + setCompRatio;        
+            let response = await fetch(path, { method: "GET", headers: {"Accept": "audio/*"}, credentials: "include"});
+            if (!response.ok) throw new Error(response.status + " " + response.statusText);
+            let audioBuffer = await response.arrayBuffer();
+            let decodedBuffer = await Controller.audioContext.decodeAudioData(audioBuffer);
+            return decodedBuffer;
+        }
+    });
+
+    // const getDecodedBuffer = async function (recordingReference) {
+    //     const path = "../../services/documents/" + recordingReference;        
+    //     let response = await fetch(path, { method: "GET", headers: {"Accept": "audio/*"}, credentials: "include"});
+    //     if (!response.ok) throw new Error(response.status + " " + response.statusText);
+    //     let audioBuffer = await response.arrayBuffer();
+    //     let decodedBuffer = await Controller.audioContext.decodeAudioData(audioBuffer);
+    //     return decodedBuffer;
+    // } 
 
     Object.defineProperty(ServerRadioController.prototype, "fetchTracks", {
         value: async function (genres, artists) {
