@@ -52,12 +52,17 @@
                 <div class="col-container hide" id="playlist-section">
                     <div class="list">
                         <label>Volume</label> <br>
-                        <input type="range" name="volume" id="volume" min="0" max="2" value="1" step="0.01">
+                        <input type="range" name="volume" id="volume" min="0" max="2" value="1" step="0.01"><br>
+
+                        <label for="">Compression ratio: <span id="Compression-ratio">1</span>.</label> <br>
+                        <input type="range" name="compRatio" id="compRatio_id" min="0.4" max="1.4" value="1.0" step="0.01">
                     </div>
+
                     <div class="list">
                         <label for="">Crossfade duration: <span id="crossfade-duration">10</span>s.</label> <br>
                         <input type="range" name="crossfade" id="crossfade_id" min="0" max="60" value="10" step="1">
                     </div>
+
                     <div class="list">
                         <h4>Playlist:</h4>
                         <ul id="playlist" class="no-bullets"></ul>
@@ -94,12 +99,10 @@
                     <div class="right-area">
                         <button id="stream">Stream</button>
                     </div>
-                    <hr>
+                    
                     <div>
                         <h2>Log:</h2>
                         <textarea id="offer" rows="10" cols="40" ></textarea>
-                        <button id="accept-answer">Accept</button>
-                        <button id="test-connection">TEST</button>
                         <textarea id="log" rows="10" cols="40" readonly></textarea>
                     </div>
                 </div>
@@ -115,11 +118,10 @@
                                 </div>
 
                                 <!--
-                                    Testing audio element for WebRTC
+                                    place audio element for WebRTC
                                 -->
                                 <div id="audioArea">
                                     <div class="label">Remote audio:</div>
-                                    <!--audio id="audio2" autoplay controls src=""></audio-->
                                 </div>
 
                                 <div>

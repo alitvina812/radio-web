@@ -65,7 +65,8 @@
 
 	let localStream;
 	var destination = null;
-	var song = null;
+	var songStream = null;
+	var songLocal = null;
 
 // WEB-RTC server/sender ****************************************************  
 // for some ides see: https://github.com/webrtc/samples/blob/gh-pages/src/content/peerconnection/pc1/js/main.js
@@ -73,31 +74,10 @@
 	Object.defineProperty(PeerRadioController.prototype, "makeOffer", {
 		value: async function makeOffer() {
 			if (this.connection) this.connection.close();
-
-			console.log("getting local stream...");
-
-			let files = this.filesToPlay;
-			if (this.currentTrack >= files.length) {
-				this.currentTrack = 0;
-			}
-			if (!Controller.audioContext) Controller.audioContext = new AudioContext();
-			destination = Controller.audioContext.createMediaStreamDestination();
-			console.log(this.filesToPlay);
 			
-			console.log("currentTrack: " + this.currentTrack);
-			console.log(files[this.currentTrack]);
-
-			let audioBuffer = await readFile(files[this.currentTrack]);
-			let decodedBuffer = await Controller.audioContext.decodeAudioData(audioBuffer);
-
-			song = Controller.audioContext.createBufferSource();
-			song.buffer = decodedBuffer;
-			song.start();
-			song.connect(destination);
-			console.log(song);
-			
-			localStream = destination;
-			
+			console.log(localStream);
+			await this.playSong();
+			console.log(localStream);
 
 			this.connection = new RTCPeerConnection();
 			this.connection.addEventListener("icecandidate", event => this.handleIceCandidate(event.candidate));
@@ -158,9 +138,16 @@
 	// send message to remote
 	Object.defineProperty(PeerRadioController.prototype, "sendMessage", {
 		value: function sendMessage(data) {
-			document.querySelector("#log").value += data + "\n";
-			this.channel.send(data);
-			this.channel.send(this.filesToPlay);
+				// document.querySelector("#log").value += data + "\n";
+				// this.channel.send(data);
+
+			if(this.channel){
+				document.querySelector("#log").value += data + "\n";
+				this.channel.send(data);
+			} else {
+				document.querySelector("#log").value += "[DataChannel not open]\n";
+			}
+			
 		}
 	});
 
@@ -237,10 +224,6 @@
 				console.log("set src via URL");
 				audio.src = URL.createObjectURL(e.streams[0]);
 			  }
-			// if (this.audio2.srcObject !== e.streams[0]) {
-			// 	this.audio2.srcObject = e.streams[0];
-			// 	console.log('received remote stream');
-			//   }
 		}
 	})
 
@@ -251,15 +234,11 @@
 	
 			// display local description SDP with all candidates, and global IP4 addresses
 			let sdp = this.connection.localDescription.sdp;
+
 			// for local network and testing disabled, because is not working
 			//if (this.address) sdp = sdp.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/g, this.address);
 			document.querySelector("#offer").value = sdp;
-			document.querySelector("#log").value += "[offer generated]\n";
-			
-			
-			// TODO: move this to a better place
-			//this.registerTransmission();
-			
+			document.querySelector("#log").value += "[offer generated]\n";			
 		}
 	});	
 
@@ -298,9 +277,11 @@
 
 
 	// get the peplple which are sending -> get stations
-	Object.defineProperty(PeerRadioController.prototype, "fetchStations", {
-        value: async function () {
-            let path = "/services/people";
+	Object.defineProperty(PeerRadioController.prototype, "fetchPeople", {
+        value: async function (searchString) {
+			let path = "/services/people";
+			if (searchString) path = path + searchString;
+			console.log(searchString);
             // if (genres.length > 0 || artists.length > 0) {
             //     path += "?";
                
@@ -362,28 +343,57 @@
 
 	Object.defineProperty(PeerRadioController.prototype, "playSong", {
 		value: async function playSong() {
+			console.log("getting local stream...");
+
 			let files = this.filesToPlay;
 			if (this.currentTrack >= files.length) {
 				this.currentTrack = 0;
 			}
-
 			if (!Controller.audioContext) Controller.audioContext = new AudioContext();
+			if (!destination) destination = Controller.audioContext.createMediaStreamDestination();
 			console.log(this.filesToPlay);
 			
 			console.log("currentTrack: " + this.currentTrack);
 			console.log(files[this.currentTrack]);
 
 			let audioBuffer = await readFile(files[this.currentTrack]);
-			let decodedBuffer = await Controller.audioContext.decodeAudioData(audioBuffer);
-			let song = Controller.audioContext.createBufferSource();
-			song.buffer = decodedBuffer;
-			song.connect(Controller.audioContext.destination);
-			console.log(song);
+			let decodedBufferStream = await Controller.audioContext.decodeAudioData(audioBuffer);
+			// let decodedBufferLocal = await Controller.audioContext.decodeAudioData(audioBuffer);
+
+			songStream = Controller.audioContext.createBufferSource();
+			songStream.buffer = decodedBufferStream;
+
+			songLocal = Controller.audioContext.createBufferSource();
+			songLocal.buffer = decodedBufferStream;
+
+			songStream.connect(destination);
+			songLocal.connect(Controller.audioContext.destination);
 			
-			song.start();
+			songStream.start();
+			songLocal.start();
+
 			this.currentTrack++;
-			song.addEventListener("ended", () => {
+			localStream = destination;
+			
+				// +++++++++++++++++++++++
+			// if (!Controller.audioContext) Controller.audioContext = new AudioContext();
+			// console.log(this.filesToPlay);
+			
+			// console.log("currentTrack: " + this.currentTrack);
+			// console.log(files[this.currentTrack]);
+
+			// let audioBuffer = await readFile(files[this.currentTrack]);
+			// let decodedBuffer = await Controller.audioContext.decodeAudioData(audioBuffer);
+			// let song = Controller.audioContext.createBufferSource();
+			// song.buffer = decodedBuffer;
+			// song.connect(Controller.audioContext.destination);
+			// console.log(song);
+			
+			// song.start();
+			// this.currentTrack++;
+			songLocal.addEventListener("ended", () => {
 				this.playSong();
+				console.log("Play next song...")
 			})
 
 		}
@@ -393,7 +403,7 @@
 	// call before sending next track
 	// und einmal ganz am anfang
 	Object.defineProperty(PeerRadioController.prototype, "registerTransmission", {
-		value: async function registerTransmission() {
+		value: async function registerTransmission(checkForListeners = true) {
 			console.log("registerTransmission")
 			let person = Controller.sessionOwner;
 			console.log("Person: ", person);
@@ -417,7 +427,9 @@
 			console.log(response.json());
 			console.log("registerTransmission DONE.");
 
-			checkForAnswer(this);
+			if (checkForListeners) {
+				checkForAnswer(this);
+			}
 		}
 	});
 
@@ -503,24 +515,21 @@
 	async function checkForAnswer(ctrl) {
 		console.log("check for answer");
 		// get the stations from DB
-		let peopleList = await ctrl.fetchStations();
+		let person = Controller.sessionOwner;
+		const timesStamp = Date.now() - 5500; // not older than 5.5 sec because we are updating every 5 sec
+		const searchString = "?lastTransmissionTimestamp="+ timesStamp + "&listenerOnly=1&lastTransmissionAddress=" + person.identity;
+		console.log(searchString);
+		let peopleList = await ctrl.fetchPeople(searchString);
 		console.log(peopleList);
 
-		if (peopleList){
-			for(let item of peopleList){
-				let person = Controller.sessionOwner;
-				if(!item.lastTransmission) continue;
-				if(item.lastTransmission.address == person.identity){
-					console.log(item)
-					// now we can check if there is an answer
-					if (item.lastTransmission.answer){
-						console.log(item.lastTransmission.answer);
-						ctrl.acceptAnswer(item.lastTransmission.answer)
-						return;
-					}
-				}
-			}
+		if (peopleList.length > 0){
+			ctrl.acceptAnswer(peopleList[0].lastTransmission.answer)
+			console.log("anser accepted from: " + peopleList[0]);
+		}else{
+			ctrl.registerTransmission(false);
 		}
+
+
 		setTimeout( function() {checkForAnswer(ctrl)}, 5000);
 
 	}
@@ -537,22 +546,12 @@
 				
 				let files = document.getElementById("files");
 				files.addEventListener('change', updateFileList);
-				
-				let acceptButton = document.getElementById("accept-answer");
-				acceptButton.addEventListener("click", event => this.acceptAnswer(document.querySelector("#offer").value)); //get the pasted answer sdp
-
-				// test button to send dummy msg
-				let testButton = document.getElementById("test-connection");
-				testButton.addEventListener("click", event => this.sendMessage("_TEST_")); //get the pasted answer sdp
-				
 
 				let streamButton = document.getElementById("stream");
 				streamButton.addEventListener("click", () => {
 					console.log(this.address);
 					this.filesToPlay = files.files;
 					this.makeOffer();
-					
-					// this.playSong();
 				})
             } catch (error) {
                 this.displayError(error);
@@ -620,7 +619,10 @@
 			console.log("update station list");
 
 			// get the stations from DB
-			let peopleList = await ctrl.fetchStations();
+			const timeStamp = Date.now() - 10 * 60000; // 10 Minutes: 10 Minutes * milli sec_per_minutes
+			let searchString = "?lastTransmissionTimestamp="+ timeStamp + "&stationsOnly=1";
+			console.log(searchString);
+			let peopleList = await ctrl.fetchPeople(searchString);
 			console.log(peopleList);
 
 			if (peopleList) {

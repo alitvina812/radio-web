@@ -27,6 +27,14 @@
             writable: true,
             value: 10
         });
+
+        Object.defineProperty(this, "compRatioValue", {
+            enumerable: false,
+            configurable: false,
+            writable: true,
+            value: 1.0
+        });
+
     }
     ServerRadioController.prototype = Object.create(Controller.prototype);
     ServerRadioController.prototype.constructor = ServerRadioController;
@@ -79,6 +87,13 @@
                     this.crossfadeDuration = crossfadeInput.value;
                     let valueSpan = document.getElementById("crossfade-duration");
                     valueSpan.innerText = crossfadeInput.value;
+                })
+
+                let compRatioInput = document.getElementById("compRatio_id");
+                compRatioInput.addEventListener("input", ()=> {
+                    this.compRatioValue = compRatioInput.value;
+                    let valueSpan = document.getElementById("Compression-ratio");
+                    valueSpan.innerText = compRatioValue.value;
                 })
 
                 // click button to display current playlist
