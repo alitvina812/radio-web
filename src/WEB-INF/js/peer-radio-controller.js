@@ -22,24 +22,6 @@
 			writable: true,
 			value: 0
 		});
-
-		Object.defineProperty(this, "peerConnection", {
-			configurable: false,
-			writable: false,
-			value: new RtcPeerConnection()
-		});
-
-		Object.defineProperty(this, "offer", {
-			configurable: false,
-			writable: true,
-			value: null
-		});
-
-		Object.defineProperty(this, "answer", {
-			configurable: false,
-			writable: true,
-			value: null
-		});
 		
 		// copy from unidirektionale offer.js
 		Object.defineProperty(this, "address", { enumerable : true,  writable: true, value: null });
@@ -87,14 +69,7 @@
 			//this.connection.addTrack(destination.stream);
 			console.log('Added local stream to connection');
 
-	
-			// let offer = await this.connection.createOffer();
-			const offerOptions = {
-				offerToReceiveAudio: 0,
-				offerToReceiveVideo: 0,
-				voiceActivityDetection: false
-			  };
-			let offer = await this.connection.createOffer(offerOptions);
+			let offer = await this.connection.createOffer();
 			await this.connection.setLocalDescription(offer);
 	
 			document.querySelector("#log").value += "[channel opened]\n";	
@@ -107,16 +82,15 @@
 			if (iceCandidate) return;
 			console.log(iceCandidate);
 			// display local description SDP with all candidates, and global IP4 addresses
-			let sdp = this.connection.localDescription.sdp;
+			let offer = this.connection.localDescription.sdp;
 			
 			// for local network and testing disabled, because is not working
 			//if (this.address) sdp = sdp.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/g, this.address);
 
-			this.offer = sdp;
-			document.querySelector("#offer").value = this.offer;
+			document.querySelector("#offer").value = offer;
 			document.querySelector("#log").value += "[offer generated]\n";
 						
-			this.registerTransmission();
+			this.registerNegotiation(true, offer);
 			
 		}
 	});
@@ -151,38 +125,16 @@
 		}
 	});
 
-	// close send channel
-	Object.defineProperty(PeerRadioController.prototype, "closeChannel", {
-		value: function () {
-			if (!this.channel) {
-				this.channel.close();
-				this.channel = null;
-			}
-			document.querySelector("#log").value += "[channel closed]\n";
-
-			// delete offer from DB
-			this.unregisterTransmission();
-		}
-	});
 // END WEB-RTC server/sender ****************************************************
 
 // WEB-RTC listener *************************************************************
 	// recreate offer from sdp, then create answer
 	Object.defineProperty(PeerRadioController.prototype, "acceptOffer", {
-		value: async function acceptOffer(station) {
-			console.log(station);
-			if(station){
-
-			}
-			console.log(station);
-			let sdp = station.lastTransmission.offer;
+		value: async function acceptOffer(sender) {
+			console.log(sender);
+			if (!sender.negotiation) sender.negotiation = {};
+			let sdp = sender.negotiation.offer;
 			if (sdp.length === 0) return;
-
-			const answerOptions = {
-				offerToReceiveAudio: 1,
-				offerToReceiveVideo: 0,
-				voiceActivityDetection: false
-			  };
 
 			if (this.connection) this.connection.close();
 			this.connection = new RTCPeerConnection();
@@ -191,13 +143,12 @@
 			//this.connection.addEventListener('track', this.handleTrack_listener);
 			this.connection.ontrack = this.handleTrack_listener;
 
-			let offer = new RTCSessionDescription({ type: "offer", sdp: sdp });
-			await this.connection.setRemoteDescription(offer);
-			let answer = await this.connection.createAnswer(answerOptions);
+			await this.connection.setRemoteDescription({ type: "offer", sdp: sdp });
+			let answer = await this.connection.createAnswer();
 			await this.connection.setLocalDescription(answer);
 
-			station.lastTransmission.answer = answer.sdp;
-			this.registerAnswer(station);
+			sender.negotiation.answer = answer.sdp;
+			this.registerAnswer(sender, answer.sdp);
 
 			document.querySelector("#log2").value = "[offer accepted]\n";
 			document.querySelector("#answer").value += answer.sdp;
@@ -280,7 +231,7 @@
 	Object.defineProperty(PeerRadioController.prototype, "fetchPeople", {
         value: async function (searchString) {
 			let path = "/services/people";
-			if (searchString) path = path + searchString;
+			if (searchString) path = path + "?" + searchString;
 			console.log(searchString);
             // if (genres.length > 0 || artists.length > 0) {
             //     path += "?";
@@ -402,19 +353,17 @@
 	// offer = rtc session description with type = "offer"
 	// call before sending next track
 	// und einmal ganz am anfang
-	Object.defineProperty(PeerRadioController.prototype, "registerTransmission", {
-		value: async function registerTransmission(checkForListeners = true) {
-			console.log("registerTransmission")
+	Object.defineProperty(PeerRadioController.prototype, "registerNegotiation", {
+		value: async function registerNegotiation(checkForListeners, offer) {
+			console.log("registerNegotiation")
 			let person = Controller.sessionOwner;
 			console.log("Person: ", person);
 			let path = "/services/people/";// + person;
 			
 			console.log("SDP: ", this.connection.localDescription.sdp);
-			person.lastTransmission = {
-				address: this.address,
+			person.negotiation = {
 				timestamp: Date.now(),
-				offer: this.offer,
-				answer: "",
+				offer: offer
 			}
 			// wenn nicht klappt, body: JSON.stringify(person)
 			console.log("POST Transmission:\n", person);
@@ -425,26 +374,22 @@
 			
 			if (!response.ok) throw new Error(response.status + " " + response.statusText);
 			console.log(response.json());
-			console.log("registerTransmission DONE.");
+			console.log("registerNegotiation DONE.");
 
 			if (checkForListeners) {
-				checkForAnswer(this);
+				checkForAnswer(this, offer);
 			}
 		}
 	});
 
-	Object.defineProperty(PeerRadioController.prototype, "unregisterTransmission", {
-		value: async function unregisterTransmission() {
-			console.log("unregisterTransmission")
+	Object.defineProperty(PeerRadioController.prototype, "unregisterNegotiation", {
+		value: async function unregisterNegotiation() {
+			console.log("unregisterNegotiation")
 			let person = Controller.sessionOwner;
-			let path = "/services/people/";// + person;
+			let path = "/services/people";// + person;
 			
-			person.lastTransmission = {
-				address: null,
-				timestamp: null,
-				offer: null,
-				answer: null,
-			}
+			delete person.negotiation;
+
 			// wenn nicht klappt, body: JSON.stringify(person)
 			console.log("POST Transmission offer deleted");
 			let response = await fetch(path, { method: "POST", 
@@ -454,28 +399,27 @@
 			
 			if (!response.ok) throw new Error(response.status + " " + response.statusText);
 			console.log(response.json());
-			console.log("unregisterTransmission DONE.");
+			console.log("unregisterNegotiation DONE.");
 		}
 	});
 
 	Object.defineProperty(PeerRadioController.prototype, "registerAnswer", {
-		value: async function registerAnswer(station) {
+		value: async function registerAnswer(sender, answer) {
 			console.log("registerAnswer")
-			let person = Controller.sessionOwner;
-			console.log("Station to listen to: ", station);
-			let path = "/services/people/";
+			let receiver = Controller.sessionOwner;
+			console.log("Station to listen to: ", sender);
+			let path = "/services/people";
 			
-			person.lastTransmission = {
-				address: station.identity, //we use this to show to which staion we want to listen
+			receiver.negotiation = {
 				timestamp: Date.now(),
-				offer: null,
-				answer: station.lastTransmission.answer,
+				offer: sender.negotiation.offer,
+				answer: answer,
 			}
-			console.log("updated Station with answer", person);
+			console.log("updated receiver with answer", receiver);
 			console.log("POST Answer");
 			let response = await fetch(path, { method: "POST", 
 				headers: {"Content-Type": "application/json"},
-				credentials: "include", body: JSON.stringify(person),
+				credentials: "include", body: JSON.stringify(receiver),
 				});
 			
 			if (!response.ok) throw new Error(response.status + " " + response.statusText);
@@ -486,17 +430,12 @@
 	});
 
 	Object.defineProperty(PeerRadioController.prototype, "unregisterAnswer", {
-		value: async function unregisterAnswer(station) {
+		value: async function unregisterAnswer(sender) {
 			console.log("unregisterAnswer")
 			let person = Controller.sessionOwner;
 			let path = "/services/people/";
 			
-			person.lastTransmission = {
-				address: null,
-				timestamp: null,
-				offer: null,
-				answer: null,
-			}
+			delete person.negotiation;
 			
 			console.log("POST delete answer");
 			let response = await fetch(path, { method: "POST", 
@@ -512,26 +451,28 @@
 	});
 
 	// function to regulary check for an answer in the DB
-	async function checkForAnswer(ctrl) {
+	async function checkForAnswer(controller, offer) {
 		console.log("check for answer");
 		// get the stations from DB
 		let person = Controller.sessionOwner;
-		const timesStamp = Date.now() - 5500; // not older than 5.5 sec because we are updating every 5 sec
-		const searchString = "?lastTransmissionTimestamp="+ timesStamp + "&listenerOnly=1&lastTransmissionAddress=" + person.identity;
+		let builder = new URLSearchParams();
+		builder.set("lowerNegotiationTimestamp", Date.now() - 5500);
+		builder.set("negotiationOffer", offer);
+		builder.set("negotiationAnswering", true);
+		const searchString = builder.toString();
 		console.log(searchString);
-		let peopleList = await ctrl.fetchPeople(searchString);
+		let peopleList = await controller.fetchPeople(searchString);
 		console.log(peopleList);
 
 		if (peopleList.length > 0){
-			ctrl.acceptAnswer(peopleList[0].lastTransmission.answer)
-			console.log("anser accepted from: " + peopleList[0]);
+			controller.acceptAnswer(peopleList[0].negotiation.answer)
+			console.log("answer accepted from: " + peopleList[0]);
 		}else{
-			ctrl.registerTransmission(false);
+			controller.registerNegotiation(false, offer);
 		}
 
-
-		setTimeout( function() {checkForAnswer(ctrl)}, 5000);
-
+		//TODO abort after negotiation has finished
+		setTimeout( function() {checkForAnswer(controller, offer)}, 5000);
 	}
 	
 	Object.defineProperty(PeerRadioController.prototype, "displayPlayerSection", {
@@ -614,15 +555,17 @@
 	
 	// Object.defineProperty(PeerRadioController.prototype, "setupStationList", {
 	// 	value: 
-	// need to use ctrl parameter otherwise it does not work
-	async function setupStationList(ctrl) {
+	// need to use controller parameter otherwise it does not work
+	async function setupStationList(controller) {
 			console.log("update station list");
 
 			// get the stations from DB
-			const timeStamp = Date.now() - 10 * 60000; // 10 Minutes: 10 Minutes * milli sec_per_minutes
-			let searchString = "?lastTransmissionTimestamp="+ timeStamp + "&stationsOnly=1";
+			let builder = new URLSearchParams();
+			builder.set("lowerNegotiationTimestamp", Date.now() - 10 * 60000);
+			builder.set("negotiationOffering", true);
+			let searchString = builder.toString();
 			console.log(searchString);
-			let peopleList = await ctrl.fetchPeople(searchString);
+			let peopleList = await controller.fetchPeople(searchString);
 			console.log(peopleList);
 
 			if (peopleList) {
@@ -632,20 +575,20 @@
 				}
 				
 				for (let item of peopleList) {
-					if (item.lastTransmission){
-						if(item.lastTransmission.offer){
+					if (item.negotiation){
+						if(item.negotiation.offer){
 								let liEl = document.querySelector("#peer-radio-stationlist-el").content.cloneNode(true).firstElementChild;
 
 								let btn = liEl.querySelector("button");
 								console.log("Set Station: ", item);
-								btn.addEventListener("click", event => ctrl.acceptOffer(item)
+								btn.addEventListener("click", event => controller.acceptOffer(item)
 								);
 
 								let img = liEl.querySelector("img");
 								img.src = "../../services/documents/" + item.avatarReference;
 								liEl.querySelector("output.name").value = item.forename;
-								var date = new Date(item.lastTransmission.timestamp); // https://makitweb.com/convert-unix-timestamp-to-date-time-with-javascript/
-								liEl.querySelector("output.lasttransmission").value = date.toLocaleDateString() + " " + date.toLocaleTimeString(); 
+								var date = new Date(item.negotiation.timestamp); // https://makitweb.com/convert-unix-timestamp-to-date-time-with-javascript/
+								liEl.querySelector("output.negotiation").value = date.toLocaleDateString() + " " + date.toLocaleTimeString(); 
 								
 								listEl.appendChild(liEl);
 						}
@@ -653,13 +596,32 @@
 				}
 			}
 
-			// if(ctrl.connection.connectionState == "connected"){
+			// if(controller.connection.connectionState == "connected"){
 			// 	return; // stop updating station list while streaming ...
 			// }
-			setTimeout( function() {setupStationList(ctrl)}, 10000);
+			setTimeout( function() {setupStationList(controller)}, 10000);
 		}
 	// });
-	
+	// mit await aufrufen
+		function negotiateLocalDescription(connection, offerMode) {
+			return new Promise(async (resolve, reject) => {
+				connection.onicecandidate = event => {
+					if (!event.candidate) {
+						delete connection.icecandidate;
+						resolve(connection.localDescription);
+					}
+				};
+
+				if (offerMode) {
+					let offer = await connection.createOffer();
+					await connection.setLocalDescription(offer);
+				} else {
+					let answer = await connection.createAnswer();
+					await connection.setLocalDescription(answer);
+				}
+			});
+		} 
+
 	window.addEventListener("load", event => {
 		const anchor = document.querySelector("header li:nth-of-type(3) > a");
 		const controller = new PeerRadioController();

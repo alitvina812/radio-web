@@ -55,12 +55,12 @@
                         <input type="range" name="volume" id="volume" min="0" max="2" value="1" step="0.01"><br>
 
                         <label for="">Compression ratio: <span id="Compression-ratio">1</span>.</label> <br>
-                        <input type="range" name="compRatio" id="compRatio_id" min="0.2" max="5" value="1.0" step="0.01">
+                        <input type="range" id="compressionRatioExponent" min="-3.0" max="3.0" value="0.0" step="0.125">
                     </div>
 
                     <div class="list">
                         <label for="">Crossfade duration: <span id="crossfade-duration">10</span>s.</label> <br>
-                        <input type="range" name="crossfade" id="crossfade_id" min="0" max="60" value="10" step="1">
+                        <input type="range" id="crossfadeDuration" min="0" max="60" value="10" step="1">
                     </div>
 
                     <div class="list">
@@ -94,17 +94,21 @@
                             <h4>Selected files:</h4>
                                 <ul id="filelist" class="no-bullets"></ul>
                         </div>
+                        
+                        <div>
+                        	<h2>Log:</h2>
+                        	<textarea id="offer" rows="10" cols="40" ></textarea>
+                        	<textarea id="log" rows="10" cols="40" readonly></textarea>
+                    	</div>
+                    
+                    
                     </div>
                
                     <div class="right-area">
                         <button id="stream">Stream</button>
                     </div>
                     
-                    <div>
-                        <h2>Log:</h2>
-                        <textarea id="offer" rows="10" cols="40" ></textarea>
-                        <textarea id="log" rows="10" cols="40" readonly></textarea>
-                    </div>
+                   
                 </div>
                 
                 <div class="listener-section">     
@@ -177,7 +181,7 @@
                 <div class="stationlist__name">
                     <output class="name"></output>
                     <br> 
-                    <output class="lasttransmission"></output>
+                    <output class="negotiation"></output>
                 </div>
 			</li>
         </template>

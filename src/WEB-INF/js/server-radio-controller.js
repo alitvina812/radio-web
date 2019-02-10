@@ -28,7 +28,7 @@
             value: 10
         });
 
-        Object.defineProperty(this, "compRatioValue", {
+        Object.defineProperty(this, "compressionRatio", {
             enumerable: false,
             configurable: false,
             writable: true,
@@ -70,6 +70,8 @@
             const mainElement = document.querySelector("main");
             mainElement.appendChild(document.querySelector("#server-radio-template").content.cloneNode(true).firstElementChild);
             
+            if (!Controller.audioContext) Controller.audioContext = new AudioContext();
+
             try {
                 // get genres and artists, build checkbox lists
                 let responsePromiseG = fetch("/services/tracks/genres", { method: "GET", headers: {"Accept": "application/json"}, credentials: "include"});
@@ -82,18 +84,18 @@
                 const artists = await responseA.json();
                 setupList(document.getElementById("genres-list"), genres);
                 setupList(document.getElementById("artists-list"), artists);
-                let crossfadeInput = document.getElementById("crossfade_id");
+                let crossfadeInput = document.getElementById("crossfadeDuration");
                 crossfadeInput.addEventListener("input", ()=> {
                     this.crossfadeDuration = crossfadeInput.value;
                     let valueSpan = document.getElementById("crossfade-duration");
                     valueSpan.innerText = crossfadeInput.value;
                 })
 
-                let compRatioInput = document.getElementById("compRatio_id");
-                compRatioInput.addEventListener("input", ()=> {
-                    this.compRatioValue = compRatioInput.value;
+                let compressionExponentInput = document.getElementById("compressionRatioExponent");
+                compressionExponentInput.addEventListener("input", ()=> {
+                    this.compressionRatio = Math.pow(2, compressionExponentInput.value);
                     let valueSpan = document.getElementById("Compression-ratio");
-                    valueSpan.innerText = compRatioInput.value;
+                    valueSpan.innerText = this.compressionRatio;
                 })
 
                 // click button to display current playlist
@@ -153,8 +155,6 @@
             
                   
             setupPlayList(playList);
-            
-            if (!Controller.audioContext) Controller.audioContext = new AudioContext();
            
             if (this.currentTrack >= playList.length - 1) {
                 this.currentTrack = 0;
@@ -172,28 +172,32 @@
             this.leftAudioSource.loop = false;
             this.leftAudioSource.buffer = leftBuffer;
             let duration = leftBuffer.duration;
-            let currentTime = Controller.audioContext.currentTime;
+            
             // this.leftAudioSource.connect(Controller.audioContext.destination);
             // this.rightAudioSource = Controller.audioContext.createBufferSource();
             // this.rightAudioSource.loop = false;
             // this.rightAudioSource.buffer = rightBuffer;
             
             // volume 
-            const gainNode = Controller.audioContext.createGain();
-            this.leftAudioSource.connect(gainNode).connect(Controller.audioContext.destination);
-            const volumeControl = document.getElementById("volume");
+            let gainNode = Controller.audioContext.createGain();
+            this.leftAudioSource.connect(gainNode);
+            gainNode.connect(Controller.audioContext.destination);
+            let volumeControl = document.getElementById("volume");
             volumeControl.addEventListener("input", function () {
                 console.log("input value: " + this.value);
                 console.log("gain node value: " + gainNode.gain.value);
                 
                 gainNode.gain.value = this.value;
-            }, false); 
+            }); 
+           
+            let currentTime = Controller.audioContext.currentTime;
 
-            gainNode.gain.linearRampToValueAtTime(0, currentTime);
+            gainNode.gain.setValueAtTime(0, currentTime);
             gainNode.gain.linearRampToValueAtTime(1, currentTime + fadeTime);
 
             this.leftAudioSource.start();
 
+            //define neutral ramp from 1 to 1 in order to set start time of subsequent fade out
             gainNode.gain.linearRampToValueAtTime(1, currentTime + duration - fadeTime);
             gainNode.gain.linearRampToValueAtTime(0, currentTime + duration);
 
@@ -231,8 +235,8 @@
     Object.defineProperty(ServerRadioController.prototype, "getDecodedBuffer",{
         value: async function getDecodedBuffer(recordingReference) {
             
-            const setCompRatio =  "?audioCompressionRatio=" + this.compRatioValue;
-            const path = "../../services/documents/" + recordingReference + setCompRatio;        
+            const setCompRatio =  "?audioCompressionRatio=" + this.compressionRatio;
+            const path = "/services/documents/" + recordingReference + setCompRatio;        
             let response = await fetch(path, { method: "GET", headers: {"Accept": "audio/*"}, credentials: "include"});
             if (!response.ok) throw new Error(response.status + " " + response.statusText);
             let audioBuffer = await response.arrayBuffer();
